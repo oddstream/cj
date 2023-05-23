@@ -45,8 +45,53 @@ func (n *note) getFname() string {
 	}
 }
 
-// load undated note (using title)
-// load daily note (using time.Time)
+func (n *note) load() {
+	file, err := os.Open(n.fname)
+	if err != nil || file == nil {
+		log.Print(n.fname, " does not exist")
+		return
+	}
+	fi, err := file.Stat()
+	if err != nil {
+		log.Fatal(err, " getting FileInfo ", n.fname)
+	}
+	if fi.Size() == 0 {
+		log.Print(n.fname, " is empty")
+	} else {
+		bytes := make([]byte, fi.Size()+8)
+		_, err = file.Read(bytes)
+		if err != nil {
+			log.Fatal(err, " reading ", n.fname)
+		}
+		n.text = string(bytes)
+	}
+	err = file.Close()
+	if err != nil {
+		log.Fatal(err, " closing ", n.fname)
+	}
+	n.title = n.getTitle()
+}
+
+func (n *note) loadUndated(title string) {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Panic(err)
+	}
+	n.fname = path.Join(userConfigDir, "oddstream.games", "goldnotebook", "undated", title+".txt")
+	n.load()
+}
+
+func (n *note) loadDated(date time.Time) {
+	userConfigDir, err := os.UserConfigDir()
+	if err != nil {
+		log.Panic(err)
+	}
+	n.fname = path.Join(userConfigDir, "oddstream.games", "goldnotebook",
+		fmt.Sprintf("%04d", date.Year()),
+		fmt.Sprintf("%02d", date.Month()),
+		fmt.Sprintf("%02d.txt", date.Day()))
+	n.load()
+}
 
 func isStringEmpty(str string) bool {
 	for _, r := range str {

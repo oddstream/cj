@@ -59,3 +59,20 @@ func TestNoteSave(t *testing.T) {
 	n.fname = n.getFname()
 	n.save()
 }
+
+func TestNoteLoad(t *testing.T) {
+	n := &note{
+		text: "Now is the winter of our discontent\nMade glorious summer",
+	}
+	n.title = n.getTitle()
+	n.fname = n.getFname()
+	n.save()
+
+	n.text = ""
+	n.title = ""
+
+	n.loadUndated("Now is the winter of our discontent")
+	if n.title != "Now is the winter of our discontent" {
+		t.Error("Not expecting title to be", n.title)
+	}
+}

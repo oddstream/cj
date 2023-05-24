@@ -1,9 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
+
+func TestDateParse(t *testing.T) {
+	n := note{
+		date: time.Now(),
+		text: "Now is the winter of our discontent\nMade glorious summer",
+	}
+	fname := n.getFname()
+	fmt.Println(fname)
+	tim := parseDateFromFname(fname)
+	fmt.Println(tim)
+}
 
 func TestNoteFname(t *testing.T) {
 	n := note{

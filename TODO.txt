@@ -1,15 +1,18 @@
-[ ] list only displaying 1 of 3 items
-	they are there, but list is very short!
 
-[ ] Grup to produce list of matching filenames (= titles) + ISO 6801 dates (from found filenames)
-[ ] Populate list from results of grup
-[ ] Calendar - highlight current date
+[ ] Load note directly from list item?
+[ ] Update list if note title edited
+[ ] Create new undated note
 [ ] Font - use a system font if possible, if not embed Droid Sans Mono
+[ ] Backup to .zip file 'goldnotebook<date of backup>.zip'
+[ ] Calendar - highlight current date
 
 [ ] found needs to contain just title, filename or else be []*note
 	foundList will display titles of all found notes (ie not dates for dated)
-[ ] have dated and undated directories
-	because they are handled differently when grupped
 
+[x] Parse filename into date
+[x] Populate list from results of grup
+[x] Grup to produce list of matching filenames
+[x] have dated and undated directories
 [x] Detect app exit to save current note
 [x] Calendar - widget.Resize() width (put it in a centered container)
+[x] list only displaying 1 of 3 items

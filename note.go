@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -57,35 +58,60 @@ func (n *note) getFname() string {
 	}
 }
 
-func (n *note) load() {
-	if n.fname == "" {
+func parseDateFromFname(fname string) time.Time {
+	var t = time.Time{}
+	lst := strings.Split(fname, string(os.PathSeparator))
+	for i := 0; i < len(lst)-3; i++ {
+		if lst[i] == "dated" {
+			if y, err := strconv.Atoi(lst[i+1]); err == nil {
+				if m, err := strconv.Atoi(lst[i+2]); err == nil {
+					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
+						if d, err := strconv.Atoi(f); err == nil {
+							t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	return t
+}
+
+func load(fname string) *note {
+	if fname == "" {
 		log.Fatal("cannot load a note with no filename")
 	}
 
-	file, err := os.Open(n.fname)
+	n := &note{}
+
+	file, err := os.Open(fname)
 	if err != nil || file == nil {
-		log.Print(n.fname, " does not exist")
-		return
+		log.Print(fname, " does not exist")
+		return nil
 	}
 	fi, err := file.Stat()
 	if err != nil {
-		log.Fatal(err, " getting FileInfo ", n.fname)
+		log.Fatal(err, " getting FileInfo ", fname)
 	}
 	if fi.Size() == 0 {
-		log.Print(n.fname, " is empty")
+		log.Print(fname, " is empty")
 	} else {
 		bytes := make([]byte, fi.Size()+8)
 		_, err = file.Read(bytes)
 		if err != nil {
-			log.Fatal(err, " reading ", n.fname)
+			log.Fatal(err, " reading ", fname)
 		}
 		n.text = string(bytes)
 	}
 	err = file.Close()
 	if err != nil {
-		log.Fatal(err, " closing ", n.fname)
+		log.Fatal(err, " closing ", fname)
 	}
+	n.fname = fname
 	n.title = n.getTitle()
+	n.date = parseDateFromFname(fname)
+	return n
 }
 
 func loadUndatedNote(title string) *note {
@@ -93,11 +119,7 @@ func loadUndatedNote(title string) *note {
 	if err != nil {
 		log.Panic(err)
 	}
-	n := &note{
-		fname: path.Join(UserHomeDir, NOTEBOOK_DIR, "undated", title+".txt"),
-	}
-	n.load()
-	return n
+	return load(path.Join(UserHomeDir, NOTEBOOK_DIR, "undated", title+".txt"))
 }
 
 func loadDatedNote(date time.Time) *note {
@@ -105,15 +127,12 @@ func loadDatedNote(date time.Time) *note {
 	if err != nil {
 		log.Panic(err)
 	}
-	n := &note{
-		date: date,
-		fname: path.Join(userHomeDir, NOTEBOOK_DIR,
-			"dated",
-			fmt.Sprintf("%04d", date.Year()),
-			fmt.Sprintf("%02d", date.Month()),
-			fmt.Sprintf("%02d.txt", date.Day())),
-	}
-	n.load()
+	n := load(path.Join(userHomeDir, NOTEBOOK_DIR,
+		"dated",
+		fmt.Sprintf("%04d", date.Year()),
+		fmt.Sprintf("%02d", date.Month()),
+		fmt.Sprintf("%02d.txt", date.Day())))
+	n.date = date
 	return n
 }
 

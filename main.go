@@ -21,7 +21,7 @@ var book48IconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
 
 type ui struct {
 	current *note
-	found   []string
+	found   []*note
 
 	calendar     *fyne.Container //*Calendar
 	searchEntry  *widget.Entry
@@ -57,18 +57,20 @@ func findButtonTapped() {
 		log.Panic(err)
 	}
 
+	theUI.found = []*note{}
+
 	datedPath := path.Join(userHomeDir, NOTEBOOK_DIR, "dated")
 	undatedPath := path.Join(userHomeDir, NOTEBOOK_DIR, "undated")
 	results := Search(query, []string{datedPath, undatedPath})
-
-	theUI.found = results
+	for _, fname := range results {
+		theUI.found = append(theUI.found, load(fname))
+	}
 	theUI.foundList.Refresh()
-	// theUI.foundList.Resize(theUI.foundList.Size())
-	// theUI.foundList.Select(0)
 }
 
 func listSelected(id widget.ListItemID) {
-	println("listSelected", id)
+	theUI.current = theUI.found[id]
+	theUI.noteEntry.SetText(theUI.current.text)
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
@@ -84,7 +86,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			// println("update widget.ListItemID", id)
-			obj.(*widget.Label).SetText(theUI.found[id])
+			obj.(*widget.Label).SetText(theUI.found[id].title)
 		},
 	)
 	u.foundList.OnSelected = listSelected

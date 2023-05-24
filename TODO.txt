@@ -1,0 +1,11 @@
+[ ] list only displaying 1 of 3 items
+
+[ ] Grup to produce list of matching filenames (= titles) + ISO 6801 dates (from found filenames)
+[ ] Populate list from results of grup
+[ ] Calendar - widget.Resize() width
+[ ] Calendar - highlight current date
+[ ] Font - use a system font if possible, if not embed Droid Sans Mono
+
+[ ] found needs to contain just title, filename or else be []*note
+
+[x] Detect app exit to save current note

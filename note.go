@@ -10,6 +10,10 @@ import (
 	"unicode"
 )
 
+const (
+	NOTEBOOK_DIR = ".goldnotebook"
+)
+
 type note struct {
 	date  time.Time // will be IsZero() for undated notes
 	fname string    // full path+filename note was loaded from (saved so it can be remove'd if note is empty)
@@ -17,17 +21,22 @@ type note struct {
 	text  string    // the text of the note, when loaded
 }
 
-// getTitle, which will be the first line of the note
+// getTitle, which will be the first line of the note (for both dated and undated)
+// TODO maybe scan forward incase first line is blank but second line is interesting
+// TODO what if several notes have the same first line?
 func (n *note) getTitle() string {
 	title, _, found := strings.Cut(n.text, "\n")
 	if !found {
 		title = n.text // may be ""
 	}
+	if title == "" {
+		title = "untitled"
+	}
 	return title
 }
 
 func (n *note) getFname() string {
-	userConfigDir, err := os.UserConfigDir()
+	UserHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -36,9 +45,9 @@ func (n *note) getFname() string {
 		if name == "" {
 			return ""
 		}
-		return path.Join(userConfigDir, "oddstream.games", "goldnotebook", "undated", name+".txt")
+		return path.Join(UserHomeDir, NOTEBOOK_DIR, "undated", name+".txt")
 	} else {
-		return path.Join(userConfigDir, "oddstream.games", "goldnotebook",
+		return path.Join(UserHomeDir, NOTEBOOK_DIR,
 			fmt.Sprintf("%04d", n.date.Year()),
 			fmt.Sprintf("%02d", n.date.Month()),
 			fmt.Sprintf("%02d.txt", n.date.Day()))
@@ -46,6 +55,10 @@ func (n *note) getFname() string {
 }
 
 func (n *note) load() {
+	if n.fname == "" {
+		log.Fatal("cannot load a note with no filename")
+	}
+
 	file, err := os.Open(n.fname)
 	if err != nil || file == nil {
 		log.Print(n.fname, " does not exist")
@@ -72,25 +85,32 @@ func (n *note) load() {
 	n.title = n.getTitle()
 }
 
-func (n *note) loadUndated(title string) {
-	userConfigDir, err := os.UserConfigDir()
+func loadUndatedNote(title string) *note {
+	UserHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)
 	}
-	n.fname = path.Join(userConfigDir, "oddstream.games", "goldnotebook", "undated", title+".txt")
+	n := &note{
+		fname: path.Join(UserHomeDir, NOTEBOOK_DIR, "undated", title+".txt"),
+	}
 	n.load()
+	return n
 }
 
-func (n *note) loadDated(date time.Time) {
-	userConfigDir, err := os.UserConfigDir()
+func loadDatedNote(date time.Time) *note {
+	UserHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)
 	}
-	n.fname = path.Join(userConfigDir, "oddstream.games", "goldnotebook",
-		fmt.Sprintf("%04d", date.Year()),
-		fmt.Sprintf("%02d", date.Month()),
-		fmt.Sprintf("%02d.txt", date.Day()))
+	n := &note{
+		date: date,
+		fname: path.Join(UserHomeDir, NOTEBOOK_DIR,
+			fmt.Sprintf("%04d", date.Year()),
+			fmt.Sprintf("%02d", date.Month()),
+			fmt.Sprintf("%02d.txt", date.Day())),
+	}
 	n.load()
+	return n
 }
 
 func isStringEmpty(str string) bool {
@@ -109,15 +129,15 @@ func (n *note) save() {
 		return
 	}
 	// make sure the config dir has been created
-	userConfigDir, err := os.UserConfigDir()
+	UserHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 	var dir string
 	if n.date.IsZero() {
-		dir = path.Join(userConfigDir, "oddstream.games", "goldnotebook", "undated")
+		dir = path.Join(UserHomeDir, NOTEBOOK_DIR, "undated")
 	} else {
-		dir = path.Join(userConfigDir, "oddstream.games", "goldnotebook",
+		dir = path.Join(UserHomeDir, NOTEBOOK_DIR,
 			fmt.Sprintf("%04d", n.date.Year()),
 			fmt.Sprintf("%02d", n.date.Month()))
 	}

@@ -10,13 +10,13 @@ func TestNoteFname(t *testing.T) {
 		text: "Now is the winter of our discontent\nMade glorious summer",
 	}
 	fname := n.getFname()
-	if fname != "/home/gilbert/.config/oddstream.games/goldnotebook/undated/Now is the winter of our discontent.txt" {
+	if fname != "/home/gilbert/.goldnotebook/undated/Now is the winter of our discontent.txt" {
 		t.Error("Not expecting fname to be", fname)
 	}
 
 	n.date = time.Date(2023, 05, 23, 1, 1, 1, 1, time.UTC)
 	fname = n.getFname()
-	if fname != "/home/gilbert/.config/oddstream.games/goldnotebook/2023/05/23.txt" {
+	if fname != "/home/gilbert/.goldnotebook/2023/05/23.txt" {
 		t.Error("Not expecting fname to be", fname)
 	}
 }
@@ -68,10 +68,7 @@ func TestNoteLoad(t *testing.T) {
 	n.fname = n.getFname()
 	n.save()
 
-	n.text = ""
-	n.title = ""
-
-	n.loadUndated("Now is the winter of our discontent")
+	n = loadUndatedNote("Now is the winter of our discontent")
 	if n.title != "Now is the winter of our discontent" {
 		t.Error("Not expecting title to be", n.title)
 	}

@@ -36,7 +36,7 @@ func (n *note) getTitle() string {
 }
 
 func (n *note) getFname() string {
-	UserHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)
 	}
@@ -45,9 +45,12 @@ func (n *note) getFname() string {
 		if name == "" {
 			return ""
 		}
-		return path.Join(UserHomeDir, NOTEBOOK_DIR, "undated", name+".txt")
+		return path.Join(userHomeDir, NOTEBOOK_DIR,
+			"undated",
+			name+".txt") // TODO could be .md
 	} else {
-		return path.Join(UserHomeDir, NOTEBOOK_DIR,
+		return path.Join(userHomeDir, NOTEBOOK_DIR,
+			"dated",
 			fmt.Sprintf("%04d", n.date.Year()),
 			fmt.Sprintf("%02d", n.date.Month()),
 			fmt.Sprintf("%02d.txt", n.date.Day()))
@@ -98,13 +101,14 @@ func loadUndatedNote(title string) *note {
 }
 
 func loadDatedNote(date time.Time) *note {
-	UserHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)
 	}
 	n := &note{
 		date: date,
-		fname: path.Join(UserHomeDir, NOTEBOOK_DIR,
+		fname: path.Join(userHomeDir, NOTEBOOK_DIR,
+			"dated",
 			fmt.Sprintf("%04d", date.Year()),
 			fmt.Sprintf("%02d", date.Month()),
 			fmt.Sprintf("%02d.txt", date.Day())),
@@ -129,15 +133,16 @@ func (n *note) save() {
 		return
 	}
 	// make sure the config dir has been created
-	UserHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
 	var dir string
 	if n.date.IsZero() {
-		dir = path.Join(UserHomeDir, NOTEBOOK_DIR, "undated")
+		dir = path.Join(userHomeDir, NOTEBOOK_DIR, "undated")
 	} else {
-		dir = path.Join(UserHomeDir, NOTEBOOK_DIR,
+		dir = path.Join(userHomeDir, NOTEBOOK_DIR,
+			"dated",
 			fmt.Sprintf("%04d", n.date.Year()),
 			fmt.Sprintf("%02d", n.date.Month()))
 	}

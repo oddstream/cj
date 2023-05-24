@@ -1,4 +1,4 @@
-package utils
+package main
 
 import (
 	"bufio"
@@ -7,45 +7,36 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sync"
 )
 
-type SearchDebug struct {
-	Workers int
-}
-
-const (
-	LITERAL = iota
-	REGEX
-)
-
-type SearchOptions struct {
-	Kind   int
-	Lines  bool
-	Regex  *regexp.Regexp
-	Finder *stringFinder
-}
-
 type searchJob struct {
-	path string
-	opts *SearchOptions
+	path    string
+	finder  *stringFinder
+	results *[]string
 }
 
-func Search(paths []string, opts *SearchOptions, debug *SearchDebug) {
+func Search(query string, paths []string) []string {
+	finder := MakeStringFinder([]byte(query))
+
 	searchJobs := make(chan *searchJob)
 
+	results := []string{}
+
 	var wg sync.WaitGroup
-	for w := 0; w < debug.Workers; w++ {
+	for w := 0; w < 128; w++ {
 		go searchWorker(searchJobs, &wg)
 	}
 	for _, path := range paths {
-		dirTraversal(path, opts, searchJobs, &wg)
+		dirTraversal(path, finder, &results, searchJobs, &wg)
 	}
 	wg.Wait()
+
+	return results
 }
 
-func dirTraversal(path string, opts *SearchOptions, searchJobs chan *searchJob, wg *sync.WaitGroup) {
+func dirTraversal(path string, finder *stringFinder, results *[]string, searchJobs chan *searchJob, wg *sync.WaitGroup) {
+
 	info, err := os.Lstat(path)
 	if err != nil {
 		log.Fatalf("couldn't lstat path %s: %s\n", path, err)
@@ -55,7 +46,8 @@ func dirTraversal(path string, opts *SearchOptions, searchJobs chan *searchJob, 
 		wg.Add(1)
 		searchJobs <- &searchJob{
 			path,
-			opts,
+			finder,
+			results,
 		}
 		return
 	}
@@ -70,12 +62,14 @@ func dirTraversal(path string, opts *SearchOptions, searchJobs chan *searchJob, 
 	}
 
 	for _, deeperPath := range dirNames {
-		dirTraversal(filepath.Join(path, deeperPath), opts, searchJobs, wg)
+		dirTraversal(filepath.Join(path, deeperPath), finder, results, searchJobs, wg)
 	}
 }
 
 func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 	for job := range jobs {
+		// print("searching file", job.path)
+
 		f, err := os.Open(job.path)
 		if err != nil {
 			log.Fatalf("couldn't open path %s: %s\n", job.path, err)
@@ -93,34 +87,24 @@ func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 				isBinary = bytes.IndexByte(text, 0) != -1
 			}
 
-			if job.opts.Kind == LITERAL {
-				if job.opts.Finder.next(text) != -1 {
-					if isBinary {
-						fmt.Printf("Binary file %s matches\n", job.path)
-						break
-					} else if job.opts.Lines {
-						fmt.Printf("%s:%d %s\n", job.path, line, text)
-					} else {
-						fmt.Printf("%s %s\n", job.path, text)
-					}
+			if job.finder.next(text) != -1 {
+				if isBinary {
+					fmt.Printf("Binary file %s matches\n", job.path)
+					break
 				}
-			} else if job.opts.Kind == REGEX {
-				if job.opts.Regex.Find(scanner.Bytes()) != nil {
-					if isBinary {
-						fmt.Printf("Binary file %s matches\n", job.path)
-						break
-					} else if job.opts.Lines {
-						fmt.Printf("%s:%d %s\n", job.path, line, text)
-					} else {
-						fmt.Printf("%s %s\n", job.path, text)
-					}
-				}
+				// println("...found")
+				*job.results = append(*job.results, job.path)
+			} else {
+				// println("...not found")
 			}
 			line++
 		}
 		wg.Done()
 	}
 }
+
+// Could use https://pkg.go.dev/golang.org/x/text/search
+// which provides language-specific search and string matching.
 
 // Below, is Go's internal Boyer-Moore string search algorithm, it has been
 // modified to use []byte instead of string to reduce allocations.

@@ -3,6 +3,9 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"log"
+	"os"
+	"path"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -45,9 +48,23 @@ func calendarTapped(t time.Time) {
 }
 
 func findButtonTapped() {
-	theUI.found = []string{"First", "Second", "Third"}
-	theUI.foundList.Resize(theUI.foundList.Size())
-	theUI.foundList.Select(0)
+	query := theUI.searchEntry.Text
+	if query == "" {
+		return
+	}
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	datedPath := path.Join(userHomeDir, NOTEBOOK_DIR, "dated")
+	undatedPath := path.Join(userHomeDir, NOTEBOOK_DIR, "undated")
+	results := Search(query, []string{datedPath, undatedPath})
+
+	theUI.found = results
+	theUI.foundList.Refresh()
+	// theUI.foundList.Resize(theUI.foundList.Size())
+	// theUI.foundList.Select(0)
 }
 
 func listSelected(id widget.ListItemID) {
@@ -66,14 +83,16 @@ func buildUI(u *ui) fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			println("update widget.ListItemID", id)
+			// println("update widget.ListItemID", id)
 			obj.(*widget.Label).SetText(theUI.found[id])
 		},
 	)
 	u.foundList.OnSelected = listSelected
 
 	// searchThings := container.New(layout.NewGridLayout(2), u.searchEntry, u.searchButton)
-	side := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry, u.searchButton, u.foundList)
+	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry, u.searchButton)
+	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
+	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
 
 	u.noteEntry = widget.NewMultiLineEntry()
 	u.noteEntry.SetText(theUI.current.text)

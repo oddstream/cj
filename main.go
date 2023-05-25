@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -30,7 +31,7 @@ type ui struct {
 	noteEntry    *widget.Entry
 }
 
-var theUI *ui = &ui{current: loadDatedNote(time.Now())}
+var theUI *ui = &ui{current: load(time.Now())}
 
 func saveDirtyNote() {
 	newText := theUI.noteEntry.Text
@@ -41,10 +42,12 @@ func saveDirtyNote() {
 }
 
 func calendarTapped(t time.Time) {
-	fmt.Println("calendar callback", t)
+	// fmt.Println("calendar callback", t)
 	saveDirtyNote()
-	theUI.current = loadDatedNote(t)
+	theUI.current = load(t)
 	theUI.noteEntry.SetText(theUI.current.text)
+
+	theUI.foundList.UnselectAll()
 }
 
 func findButtonTapped() {
@@ -59,16 +62,19 @@ func findButtonTapped() {
 
 	theUI.found = []*note{}
 
-	datedPath := path.Join(userHomeDir, NOTEBOOK_DIR, "dated")
-	undatedPath := path.Join(userHomeDir, NOTEBOOK_DIR, "undated")
-	results := Search(query, []string{datedPath, undatedPath})
+	results := Search(query, []string{path.Join(userHomeDir, NOTEBOOK_DIR)})
 	for _, fname := range results {
-		theUI.found = append(theUI.found, load(fname))
+		fmt.Println("found", fname)
+		date := parseDateFromFname(fname)
+		theUI.found = append(theUI.found, load(date))
 	}
+	theUI.foundList.UnselectAll()
 	theUI.foundList.Refresh()
 }
 
 func listSelected(id widget.ListItemID) {
+	// log.Printf("list item %d selected", id)
+	saveDirtyNote()
 	theUI.current = theUI.found[id]
 	theUI.noteEntry.SetText(theUI.current.text)
 }
@@ -86,7 +92,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			// println("update widget.ListItemID", id)
-			obj.(*widget.Label).SetText(theUI.found[id].title)
+			obj.(*widget.Label).SetText(theUI.found[id].title())
 		},
 	)
 	u.foundList.OnSelected = listSelected
@@ -108,9 +114,20 @@ func main() {
 		StaticName:    "book-48.png",
 		StaticContent: book48IconBytes,
 	})
+	a.Settings().SetTheme(&noteTheme{})
 	w := a.NewWindow("Gold Notebook")
+	// shortcuts get swallowed if focus is in the note multiline entry widget
+	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
+	w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
+		w.Canvas().Focus(theUI.searchEntry)
+	})
+	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
+	w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
+		saveDirtyNote()
+	})
 	w.SetContent(buildUI(theUI))
-	w.Resize(fyne.NewSize(640, 480))
+	w.Resize(fyne.NewSize(1024, 640))
+	w.CenterOnScreen()
 	w.ShowAndRun()
 
 	// we *do* come here when app quits because window close [x] button pressed

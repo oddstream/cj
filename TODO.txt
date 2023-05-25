@@ -1,14 +1,31 @@
 
-[ ] Load note directly from list item?
-[ ] Update list if note title edited
-[ ] Create new undated note
-[ ] Font - use a system font if possible, if not embed Droid Sans Mono
+[ ] search is case sensitive
+[ ] font could be bigger
+[ ] Calendar - highlight date of current note
+[ ] Update list if note title edited (on save, implied reloading note)
 [ ] Backup to .zip file 'goldnotebook<date of backup>.zip'
-[ ] Calendar - highlight current date
+[ ] found list has two columns: date (ISO 8601) and text (first line)
+[ ] follow url link in text
 
 [ ] found needs to contain just title, filename or else be []*note
 	foundList will display titles of all found notes (ie not dates for dated)
 
+[x] why have undated notes at all?
+	solve the problem of having >1 notes with same name
+	(currently notes can be overwritten)
+	undated notes remain hidden until found
+	there wouldn't have to be a ^N "Create new note"
+	if you want to make a "cooking" note, just pick an empty date in the past
+	and create a "cooking" note
+	why not create .goldnotebook/cooking.txt? the fname-to-date parser would fail,
+	but that's ok because it's expected
+	or "create note" could prompt for filename? that's no longer as simple as possible
+	conclusion: undated notes add complexity for marginal gain
+[x] Calendar - highlight current date
+[x] Create new undated note
+[x] Adding multiple hits to result
+[x] Load note directly from list item?
+[x] Font - use a system font if possible, if not embed Droid Sans Mono
 [x] Parse filename into date
 [x] Populate list from results of grup
 [x] Grup to produce list of matching filenames

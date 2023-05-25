@@ -3,7 +3,6 @@ package main
 import (
 	"math"
 	"strconv"
-	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -90,6 +89,7 @@ type Calendar struct {
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
+	today := time.Now()
 	start := time.Date(c.currentTime.Year(), c.currentTime.Month(), 1, 0, 0, 0, 0, c.currentTime.Location())
 	buttons := []fyne.CanvasObject{}
 
@@ -114,8 +114,11 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 
 			c.onSelected(selectedDate)
 		})
-		b.Importance = widget.LowImportance
-
+		if today.Day() == dayNum && today.Month() == start.Month() && today.Year() == start.Year() {
+			b.Importance = widget.HighImportance
+		} else {
+			b.Importance = widget.LowImportance
+		}
 		buttons = append(buttons, b)
 	}
 
@@ -139,7 +142,7 @@ func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 			j = 0
 		}
 
-		t := widget.NewLabel(strings.ToUpper(time.Weekday(j).String()[:3]))
+		t := widget.NewLabel(time.Weekday(j).String()[:3])
 		t.Alignment = fyne.TextAlignCenter
 		columnHeadings = append(columnHeadings, t)
 	}

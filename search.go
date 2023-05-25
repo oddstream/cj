@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -68,37 +67,35 @@ func dirTraversal(path string, finder *stringFinder, results *[]string, searchJo
 
 func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 	for job := range jobs {
-		// print("searching file", job.path)
 
 		f, err := os.Open(job.path)
 		if err != nil {
-			log.Fatalf("couldn't open path %s: %s\n", job.path, err)
+			log.Fatalf("couldn't open %s: %s\n", job.path, err)
 		}
 
-		scanner := bufio.NewScanner(f)
+		scanner := bufio.NewScanner(f) // defaults to ScanLines
 		isBinary := false
-
 		line := 1
-		for scanner.Scan() {
+
+		for scanner.Scan() { // read next line
 			text := scanner.Bytes()
 
 			// Check the first buffer for NUL
 			if line == 1 {
 				isBinary = bytes.IndexByte(text, 0) != -1
 			}
+			if isBinary {
+				break // ADDED completely ignore binary files
+			}
 
 			if job.finder.next(text) != -1 {
-				if isBinary {
-					fmt.Printf("Binary file %s matches\n", job.path)
-					break
-				}
-				// println("...found")
 				*job.results = append(*job.results, job.path)
-			} else {
-				// println("...not found")
+				break // ADDED only find each file once
 			}
 			line++
 		}
+
+		f.Close() // ADDED
 		wg.Done()
 	}
 }

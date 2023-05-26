@@ -71,7 +71,7 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 
 // MinSize sets the minimum size for the calendar
 func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	return fyne.NewSize(240, 240)
+	return fyne.NewSize(240, 210)
 }
 
 // Calendar creates a new date time picker which returns a time object
@@ -85,11 +85,11 @@ type Calendar struct {
 
 	dates *fyne.Container
 
-	onSelected func(time.Time)
+	onSelected  func(time.Time)
+	isImportant func(time.Time) bool
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
-	today := time.Now()
 	start := time.Date(c.currentTime.Year(), c.currentTime.Month(), 1, 0, 0, 0, 0, c.currentTime.Location())
 	buttons := []fyne.CanvasObject{}
 
@@ -109,12 +109,10 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 		dayNum := d.Day()
 		s := strconv.Itoa(dayNum)
 		b := widget.NewButton(s, func() {
-
 			selectedDate := c.dateForButton(dayNum)
-
 			c.onSelected(selectedDate)
 		})
-		if today.Day() == dayNum && today.Month() == start.Month() && today.Year() == start.Year() {
+		if c.isImportant(time.Date(c.currentTime.Year(), c.currentTime.Month(), dayNum, 0, 0, 0, 0, c.currentTime.Location())) {
 			b.Importance = widget.HighImportance
 		} else {
 			b.Importance = widget.LowImportance
@@ -183,10 +181,11 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
+func NewCalendar(cT time.Time, onSelected func(time.Time), isImportant func(time.Time) bool) *Calendar {
 	c := &Calendar{
 		currentTime: cT,
 		onSelected:  onSelected,
+		isImportant: isImportant,
 	}
 
 	c.ExtendBaseWidget(c)

@@ -1,15 +1,21 @@
 
-[ ] search is case sensitive
-[ ] font could be bigger
-[ ] Calendar - highlight date of current note
 [ ] Update list if note title edited (on save, implied reloading note)
+[ ] search is case sensitive
+[ ] word wrap
 [ ] Backup to .zip file 'goldnotebook<date of backup>.zip'
 [ ] found list has two columns: date (ISO 8601) and text (first line)
 [ ] follow url link in text
+[ ] Can't highlight hit words or spelling errors
+[ ] func NewRichTextFromMarkdown(content string) *RichText
+	RichText can't be edited, but could be used as pop-up display of a Markdown note
 
+[ ] Toolbar: <prev day | today | next day> | view markdown |
 [ ] found needs to contain just title, filename or else be []*note
 	foundList will display titles of all found notes (ie not dates for dated)
 
+[x] Enter to search after typing in entry widget
+[x] Calendar highlight to follow current, not today
+[x] font could be bigger
 [x] why have undated notes at all?
 	solve the problem of having >1 notes with same name
 	(currently notes can be overwritten)
@@ -33,3 +39,7 @@
 [x] Detect app exit to save current note
 [x] Calendar - widget.Resize() width (put it in a centered container)
 [x] list only displaying 1 of 3 items
+
+FYNE PROBLEMS
+- If the focus is in the MultiLineEntry, the keyboard shortcuts seem to be directed to that instead of canvas
+- RichText is readonly, and support for markdown is poor, and even poorer with a monospace font

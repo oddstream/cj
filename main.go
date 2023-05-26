@@ -29,40 +29,59 @@ type ui struct {
 	searchButton *widget.Button
 	foundList    *widget.List
 	noteEntry    *widget.Entry
+
+	// popUp        *widget.PopUp
 }
 
-var theUI *ui = &ui{current: load(time.Now())}
+var (
+	theUI      *ui
+	theDataDir string
+)
 
-func saveDirtyNote() {
-	newText := theUI.noteEntry.Text
-	if newText != theUI.current.text {
-		theUI.current.text = newText
-		theUI.current.save()
+func init() {
+	var err error
+	theDataDir, err = os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
 	}
+	theUI = &ui{current: load(time.Now())}
+}
+
+func (u *ui) saveDirtyNote() {
+	newText := u.noteEntry.Text
+	if newText != u.current.text {
+		u.current.text = newText
+		u.current.save()
+	}
+}
+
+func (u *ui) setCurrent(n *note) {
+	theUI.current = n
+	theUI.noteEntry.SetText(theUI.current.text)
+	theUI.calendar.Objects[0] = NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
 }
 
 func calendarTapped(t time.Time) {
 	// fmt.Println("calendar callback", t)
-	saveDirtyNote()
-	theUI.current = load(t)
-	theUI.noteEntry.SetText(theUI.current.text)
-
+	theUI.saveDirtyNote()
+	theUI.setCurrent(load(t))
 	theUI.foundList.UnselectAll()
 }
 
-func findButtonTapped() {
-	query := theUI.searchEntry.Text
+func calendarIsDateImportant(t time.Time) bool {
+	return t.Year() == theUI.current.date.Year() &&
+		t.Month() == theUI.current.date.Month() &&
+		t.Day() == theUI.current.date.Day()
+}
+
+func find(query string) {
 	if query == "" {
 		return
-	}
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Panic(err)
 	}
 
 	theUI.found = []*note{}
 
-	results := Search(query, []string{path.Join(userHomeDir, NOTEBOOK_DIR)})
+	results := Search(query, []string{path.Join(theDataDir, NOTEBOOK_DIR)})
 	for _, fname := range results {
 		fmt.Println("found", fname)
 		date := parseDateFromFname(fname)
@@ -72,16 +91,22 @@ func findButtonTapped() {
 	theUI.foundList.Refresh()
 }
 
+func findButtonTapped() {
+	find(theUI.searchEntry.Text)
+}
+
 func listSelected(id widget.ListItemID) {
 	// log.Printf("list item %d selected", id)
-	saveDirtyNote()
-	theUI.current = theUI.found[id]
-	theUI.noteEntry.SetText(theUI.current.text)
+	theUI.saveDirtyNote()
+	theUI.setCurrent(theUI.found[id])
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
-	u.calendar = container.New(layout.NewCenterLayout(), NewCalendar(time.Now(), calendarTapped))
+	u.calendar = container.New(layout.NewCenterLayout(), NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
 	u.searchEntry = widget.NewEntry()
+	u.searchEntry.OnSubmitted = func(str string) {
+		find(str)
+	}
 	u.searchButton = widget.NewButtonWithIcon("", theme.SearchIcon(), findButtonTapped)
 	u.foundList = widget.NewList(
 		func() int {
@@ -97,15 +122,19 @@ func buildUI(u *ui) fyne.CanvasObject {
 	)
 	u.foundList.OnSelected = listSelected
 
-	// searchThings := container.New(layout.NewGridLayout(2), u.searchEntry, u.searchButton)
-	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry, u.searchButton)
+	searchThings := container.New(layout.NewFormLayout(), u.searchButton, u.searchEntry)
+	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, searchThings)
+	// sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry, u.searchButton)
 	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
 	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
 
 	u.noteEntry = widget.NewMultiLineEntry()
-	u.noteEntry.SetText(theUI.current.text)
-
+	// u.noteEntry.OnChanged = func(str string) { println(str) }
 	return newAdaptiveSplit(side, u.noteEntry)
+}
+
+func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
+	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
 }
 
 func main() {
@@ -121,15 +150,22 @@ func main() {
 	w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
 		w.Canvas().Focus(theUI.searchEntry)
 	})
+	ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
+	w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
+		theUI.showMarkdownPopup(w.Canvas())
+	})
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
-		saveDirtyNote()
+		theUI.saveDirtyNote()
 	})
 	w.SetContent(buildUI(theUI))
+	w.Canvas().Focus(theUI.noteEntry)
+	theUI.noteEntry.SetText(theUI.current.text)
+
 	w.Resize(fyne.NewSize(1024, 640))
 	w.CenterOnScreen()
 	w.ShowAndRun()
 
 	// we *do* come here when app quits because window close [x] button pressed
-	saveDirtyNote()
+	theUI.saveDirtyNote()
 }

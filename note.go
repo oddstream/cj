@@ -35,11 +35,7 @@ func (n *note) title() string {
 }
 
 func (n *note) fname() string {
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Panic(err)
-	}
-	return path.Join(userHomeDir, NOTEBOOK_DIR,
+	return path.Join(theDataDir, NOTEBOOK_DIR,
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()),
 		fmt.Sprintf("%02d.txt", n.date.Day()))
@@ -114,14 +110,10 @@ func (n *note) save() {
 	}
 
 	// make sure the data dir has been created
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-	dir := path.Join(userHomeDir, NOTEBOOK_DIR,
+	dir := path.Join(theDataDir, NOTEBOOK_DIR,
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()))
-	err = os.MkdirAll(dir, 0755) // https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value
+	err := os.MkdirAll(dir, 0755) // https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value
 	if err != nil {
 		log.Fatal(err)
 	}

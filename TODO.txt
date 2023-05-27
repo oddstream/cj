@@ -1,7 +1,7 @@
 
 [ ] Update list if note title edited (on save, implied reloading note)
 [ ] search is case sensitive
-[ ] word wrap
+[ ] copy .SelectedText() to find entry when Ctrl+F
 [ ] Backup to .zip file 'goldnotebook<date of backup>.zip'
 [ ] found list has two columns: date (ISO 8601) and text (first line)
 [ ] follow url link in text
@@ -9,10 +9,15 @@
 [ ] func NewRichTextFromMarkdown(content string) *RichText
 	RichText can't be edited, but could be used as pop-up display of a Markdown note
 
+[ ] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
+	my favorite color was red, now it's blue
+[ ] Common/General notebook plus separate notebooks for TV, GT7,  ...
+	List names of .goldnotebook subdirectories at start; choose one
 [ ] Toolbar: <prev day | today | next day> | view markdown |
 [ ] found needs to contain just title, filename or else be []*note
 	foundList will display titles of all found notes (ie not dates for dated)
 
+[x] word wrap
 [x] Enter to search after typing in entry widget
 [x] Calendar highlight to follow current, not today
 [x] font could be bigger
@@ -43,3 +48,5 @@
 FYNE PROBLEMS
 - If the focus is in the MultiLineEntry, the keyboard shortcuts seem to be directed to that instead of canvas
 - RichText is readonly, and support for markdown is poor, and even poorer with a monospace font
+- SizeNameLineSpacing seems to be ignored by MultiLineEntry
+- SpellChecker https://github.com/fyne-io/fyne/issues/2325

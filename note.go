@@ -11,10 +11,6 @@ import (
 	"unicode"
 )
 
-const (
-	NOTEBOOK_DIR = ".goldnotebook"
-)
-
 type note struct {
 	date time.Time // will be IsZero() for undated notes
 	text string    // the text of the note, when loaded
@@ -35,7 +31,7 @@ func (n *note) title() string {
 }
 
 func (n *note) fname() string {
-	return path.Join(theDataDir, NOTEBOOK_DIR,
+	return path.Join(theUserHomeDir, theDataDir, theBookDir,
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()),
 		fmt.Sprintf("%02d.txt", n.date.Day()))
@@ -45,7 +41,7 @@ func parseDateFromFname(fname string) time.Time {
 	var t = time.Time{}
 	lst := strings.Split(fname, string(os.PathSeparator))
 	for i := 0; i < len(lst)-3; i++ {
-		if lst[i] == NOTEBOOK_DIR {
+		if lst[i] == theBookDir {
 			if y, err := strconv.Atoi(lst[i+1]); err == nil {
 				if m, err := strconv.Atoi(lst[i+2]); err == nil {
 					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
@@ -66,7 +62,7 @@ func load(date time.Time) *note {
 	fname := n.fname()
 	file, err := os.Open(fname)
 	if err != nil || file == nil {
-		log.Print(fname, " does not exist")
+		fmt.Println(fname, " does not exist")
 	} else {
 		fi, err := file.Stat()
 		if err != nil {
@@ -80,7 +76,9 @@ func load(date time.Time) *note {
 			if err != nil {
 				log.Fatal(err, " reading ", fname)
 			}
-			log.Printf("read %d bytes from %s", count, fname)
+			// if debugMode {
+			// 	fmt.Printf("read %d bytes from %s\n", count, fname)
+			// }
 			n.text = string(bytes[:count])
 		}
 		err = file.Close()
@@ -110,7 +108,7 @@ func (n *note) save() {
 	}
 
 	// make sure the data dir has been created
-	dir := path.Join(theDataDir, NOTEBOOK_DIR,
+	dir := path.Join(theUserHomeDir, theDataDir, theBookDir,
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()))
 	err := os.MkdirAll(dir, 0755) // https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value
@@ -120,7 +118,9 @@ func (n *note) save() {
 	// if path is already a directory, MkdirAll does nothing and returns nil
 
 	// now save the note text to file
-	log.Println("saving", fname)
+	if debugMode {
+		fmt.Println("saving", fname)
+	}
 	file, err := os.Create(fname)
 	if err != nil {
 		log.Fatal(err)

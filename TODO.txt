@@ -1,4 +1,5 @@
-
+[ ] app desktop icon
+	create a .desktop file in /usr/share/applications
 [ ] Update list if note title edited (on save, implied reloading note)
 [ ] search is case sensitive
 [ ] copy .SelectedText() to find entry when Ctrl+F
@@ -11,12 +12,11 @@
 
 [ ] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
 	my favorite color was red, now it's blue
-[ ] Common/General notebook plus separate notebooks for TV, GT7,  ...
-	List names of .goldnotebook subdirectories at start; choose one
-[ ] Toolbar: <prev day | today | next day> | view markdown |
-[ ] found needs to contain just title, filename or else be []*note
-	foundList will display titles of all found notes (ie not dates for dated)
+[ ]	List names of .goldnotebook subdirectories at start; choose one
 
+[x] Toolbar: | book | <prev day | today | next day> | preview
+[x] No need for find button
+[x] Common/General notebook plus separate notebooks for TV, GT7,  ...
 [x] word wrap
 [x] Enter to search after typing in entry widget
 [x] Calendar highlight to follow current, not today
@@ -50,3 +50,4 @@ FYNE PROBLEMS
 - RichText is readonly, and support for markdown is poor, and even poorer with a monospace font
 - SizeNameLineSpacing seems to be ignored by MultiLineEntry
 - SpellChecker https://github.com/fyne-io/fyne/issues/2325
+- Can't use Ctrl+Right/Left to move words

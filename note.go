@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -12,17 +13,19 @@ import (
 )
 
 type note struct {
-	date time.Time // will be IsZero() for undated notes
+	date time.Time // should never be IsZero()
 	text string    // the text of the note, when loaded
 }
 
-// title, which will be the first line of the note (for both dated and undated)
-// TODO maybe scan forward incase first line is blank but second line is interesting
-// TODO what if several notes have the same first line? overwriting, that's what
+// title, which will be the first line of the note
 func (n *note) title() string {
-	title, _, found := strings.Cut(n.text, "\n")
-	if !found {
-		title = n.text // may be ""
+	var title string
+	scanner := bufio.NewScanner(strings.NewReader(n.text))
+	for scanner.Scan() {
+		title = scanner.Text()
+		if len(title) > 0 {
+			break
+		}
 	}
 	if title == "" {
 		title = "untitled"
@@ -30,6 +33,7 @@ func (n *note) title() string {
 	return title
 }
 
+// fname of the note, composed of directories and date of note
 func (n *note) fname() string {
 	return path.Join(theUserHomeDir, theDataDir, theBookDir,
 		fmt.Sprintf("%04d", n.date.Year()),
@@ -37,6 +41,8 @@ func (n *note) fname() string {
 		fmt.Sprintf("%02d.txt", n.date.Day()))
 }
 
+// parseDateFromFname
+// TODO we can do better than this
 func parseDateFromFname(fname string) time.Time {
 	var t = time.Time{}
 	lst := strings.Split(fname, string(os.PathSeparator))

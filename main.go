@@ -26,11 +26,12 @@ type ui struct {
 	current *note
 	found   []*note
 
-	calendar     *fyne.Container //*Calendar
-	searchEntry  *widget.Entry
-	searchButton *widget.Button
-	foundList    *widget.List
-	noteEntry    *widget.Entry
+	w           fyne.Window
+	toolbar     *widget.Toolbar
+	calendar    *fyne.Container //*Calendar
+	searchEntry *widget.Entry
+	foundList   *widget.List
+	noteEntry   *widget.Entry
 
 	// popUp        *widget.PopUp
 }
@@ -90,10 +91,6 @@ func find(query string) {
 	theUI.foundList.Refresh()
 }
 
-func findButtonTapped() {
-	find(theUI.searchEntry.Text)
-}
-
 func listSelected(id widget.ListItemID) {
 	// log.Printf("list item %d selected", id)
 	theUI.saveDirtyNote()
@@ -101,13 +98,32 @@ func listSelected(id widget.ListItemID) {
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
+	u.toolbar = widget.NewToolbar(
+		// https://developer.fyne.io/explore/icons
+		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
+			promptUserForBookDir()
+		}),
+		widget.NewToolbarSeparator(),
+		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
+			t := theUI.current.date
+			t = t.Add(-time.Hour * 24)
+			calendarTapped(t)
+		}),
+		widget.NewToolbarAction(theme.HomeIcon(), func() {
+			calendarTapped(time.Now())
+		}),
+		widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
+			t := theUI.current.date
+			t = t.Add(time.Hour * 24)
+			calendarTapped(t)
+		}),
+	)
 	u.calendar = container.New(layout.NewCenterLayout(), NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.OnSubmitted = func(str string) {
 		find(str)
 	}
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	u.searchButton = widget.NewButtonWithIcon("", theme.SearchIcon(), findButtonTapped)
 	u.foundList = widget.NewList(
 		func() int {
 			return len(theUI.found)
@@ -122,9 +138,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	)
 	u.foundList.OnSelected = listSelected
 
-	searchThings := container.New(layout.NewFormLayout(), u.searchButton, u.searchEntry)
-	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, searchThings)
-	// sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry, u.searchButton)
+	sideTop := container.New(layout.NewVBoxLayout(), u.toolbar, u.calendar, u.searchEntry)
 	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
 	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
 
@@ -136,11 +150,11 @@ func buildUI(u *ui) fyne.CanvasObject {
 	return newAdaptiveSplit(side, u.noteEntry)
 }
 
-func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
-	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
-}
+// func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
+// 	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
+// }
 
-func promptUserForBookDir(w fyne.Window) {
+func promptUserForBookDir() {
 	var bookDirs []string
 
 	// get a list of directories
@@ -168,9 +182,10 @@ func promptUserForBookDir(w fyne.Window) {
 	// }, w)
 
 	selectedBook := theBookDir
-	combo := widget.NewSelect(bookDirs, func(book string) {
+	combo := widget.NewRadioGroup(bookDirs, func(book string) {
 		selectedBook = book
 	})
+	combo.Selected = theBookDir
 	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", combo, func(ok bool) {
 		if ok && theBookDir != selectedBook {
 			theUI.saveDirtyNote()
@@ -179,9 +194,12 @@ func promptUserForBookDir(w fyne.Window) {
 			fmt.Println("setting theBookDir to", theBookDir)
 			theBookDir = selectedBook
 			theUI.setCurrent(load(time.Now()))
-			w.SetTitle("Gold Notebook - " + theBookDir)
+			theUI.w.SetTitle("Gold Notebook - " + theBookDir)
 		}
-	}, w)
+	}, theUI.w)
+
+	// widget.List is displayed in it's MinSize, which only displays one line...
+	// tried wrapping layout and list, which didn't fix it
 
 	/*
 	   var selectedDir int
@@ -261,33 +279,32 @@ func main() {
 	// if theBookDir is set on command line, don't ask the user for it
 
 	w := a.NewWindow("Gold Notebook - " + theBookDir)
-
-	theUI = &ui{current: load(time.Now())}
+	theUI = &ui{w: w, current: load(time.Now())}
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
 	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
-	w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
-		w.Canvas().Focus(theUI.searchEntry)
+	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
+		theUI.w.Canvas().Focus(theUI.searchEntry)
 	})
-	ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
-	w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
-		theUI.showMarkdownPopup(w.Canvas())
-	})
+	// ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
+	// theUI.w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
+	// 	theUI.showMarkdownPopup(theUI.w.Canvas())
+	// })
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
-	w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
+	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()
 	})
 	ctrlB := &desktop.CustomShortcut{KeyName: fyne.KeyB, Modifier: fyne.KeyModifierControl}
-	w.Canvas().AddShortcut(ctrlB, func(shortcut fyne.Shortcut) {
-		promptUserForBookDir(w)
+	theUI.w.Canvas().AddShortcut(ctrlB, func(shortcut fyne.Shortcut) {
+		promptUserForBookDir()
 	})
-	w.SetContent(buildUI(theUI))
-	w.Canvas().Focus(theUI.noteEntry)
+	theUI.w.SetContent(buildUI(theUI))
+	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.text)
 
-	w.Resize(fyne.NewSize(1024, 640))
-	w.CenterOnScreen()
-	w.ShowAndRun()
+	theUI.w.Resize(fyne.NewSize(1024, 640))
+	theUI.w.CenterOnScreen()
+	theUI.w.ShowAndRun()
 
 	// we *do* come here when app quits because window close [x] button pressed
 	theUI.saveDirtyNote()

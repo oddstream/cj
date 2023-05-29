@@ -1,3 +1,4 @@
+[ ] app version and --version
 [ ] app desktop icon
 	create a .desktop file in /usr/share/applications
 [ ] Update list if note title edited (on save, implied reloading note)

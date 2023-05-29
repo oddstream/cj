@@ -19,6 +19,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	appName    = "Goldnotebook"
+	appVersion = "0.1"
+)
+
 //go:embed icons/book-48.png
 var book48IconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
 
@@ -138,7 +143,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	)
 	u.foundList.OnSelected = listSelected
 
-	sideTop := container.New(layout.NewVBoxLayout(), u.toolbar, u.calendar, u.searchEntry)
+	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry)
 	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
 	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
 
@@ -146,8 +151,10 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.noteEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	u.noteEntry.Wrapping = fyne.TextWrapWord
 
+	mainPanel := container.New(layout.NewBorderLayout(u.toolbar, nil, nil, nil), u.toolbar, u.noteEntry)
+
 	// u.noteEntry.OnChanged = func(str string) { println(str) }
-	return newAdaptiveSplit(side, u.noteEntry)
+	return newAdaptiveSplit(side, mainPanel)
 }
 
 // func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
@@ -257,10 +264,15 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
 	flag.StringVar(&theBookDir, "book", "Common", "name of the book to open")
 	flag.Parse()
+	if *reportVersion {
+		fmt.Println(appName, appVersion)
+		os.Exit(0)
+	}
 	// if len(flag.Args()) == 1 {
 	// 	theBookDir = flag.Args()[0]
 	// }

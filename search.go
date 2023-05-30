@@ -1,40 +1,53 @@
 package main
 
+// from https://healeycodes.com/beating-grep-with-go
+// from https://github.com/healeycodes/tools/tree/main/grup
+
 import (
 	"bufio"
 	"bytes"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 )
 
+const (
+	LITERAL = iota
+	REGEX
+)
+
+type searchOptions struct {
+	kind   int
+	regex  *regexp.Regexp
+	finder *stringFinder
+}
+
 type searchJob struct {
 	path    string
-	finder  *stringFinder
+	opts    *searchOptions
 	results *[]string
 }
 
-func Search(query string, paths []string) []string {
-	finder := MakeStringFinder([]byte(query))
-
+func Search(paths []string, opts *searchOptions) []string {
 	searchJobs := make(chan *searchJob)
 
-	results := []string{}
+	results := []string{} // ADDED
 
 	var wg sync.WaitGroup
 	for w := 0; w < 128; w++ {
 		go searchWorker(searchJobs, &wg)
 	}
 	for _, path := range paths {
-		dirTraversal(path, finder, &results, searchJobs, &wg)
+		dirTraversal(path, opts, &results, searchJobs, &wg)
 	}
 	wg.Wait()
 
-	return results
+	return results // ADDED
 }
 
-func dirTraversal(path string, finder *stringFinder, results *[]string, searchJobs chan *searchJob, wg *sync.WaitGroup) {
+func dirTraversal(path string, opts *searchOptions, results *[]string, searchJobs chan *searchJob, wg *sync.WaitGroup) {
 
 	info, err := os.Lstat(path)
 	if err != nil {
@@ -45,7 +58,7 @@ func dirTraversal(path string, finder *stringFinder, results *[]string, searchJo
 		wg.Add(1)
 		searchJobs <- &searchJob{
 			path,
-			finder,
+			opts,
 			results,
 		}
 		return
@@ -61,7 +74,7 @@ func dirTraversal(path string, finder *stringFinder, results *[]string, searchJo
 	}
 
 	for _, deeperPath := range dirNames {
-		dirTraversal(filepath.Join(path, deeperPath), finder, results, searchJobs, wg)
+		dirTraversal(filepath.Join(path, deeperPath), opts, results, searchJobs, wg)
 	}
 }
 
@@ -88,9 +101,15 @@ func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 				break // ADDED completely ignore binary files
 			}
 
-			if job.finder.next(text) != -1 {
-				*job.results = append(*job.results, job.path)
-				break // ADDED only find each file once
+			if job.opts.kind == LITERAL {
+				if job.opts.finder.next(text) != -1 {
+					*job.results = append(*job.results, job.path)
+					break // ADDED only find each file once
+				}
+			} else if job.opts.kind == REGEX {
+				if job.opts.regex.Find(scanner.Bytes()) != nil {
+					*job.results = append(*job.results, job.path)
+				}
 			}
 			line++
 		}

@@ -68,7 +68,9 @@ func load(date time.Time) *note {
 	fname := n.fname()
 	file, err := os.Open(fname)
 	if err != nil || file == nil {
-		fmt.Println(fname, " does not exist")
+		if debugMode {
+			log.Println(fname, " does not exist")
+		}
 	} else {
 		fi, err := file.Stat()
 		if err != nil {
@@ -125,7 +127,7 @@ func (n *note) save() {
 
 	// now save the note text to file
 	if debugMode {
-		fmt.Println("saving", fname)
+		log.Println("saving", fname)
 	}
 	file, err := os.Create(fname)
 	if err != nil {

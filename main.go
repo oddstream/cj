@@ -84,16 +84,21 @@ func find(query string) {
 
 	theUI.found = []*note{}
 
-	results := Search(query, []string{path.Join(theUserHomeDir, theDataDir, theBookDir)})
+	opts := &searchOptions{
+		kind:   LITERAL,
+		regex:  nil,
+		finder: MakeStringFinder([]byte(query)),
+	}
+	results := Search([]string{path.Join(theUserHomeDir, theDataDir, theBookDir)}, opts)
 	for _, fname := range results {
-		if debugMode {
-			fmt.Println("found", fname)
-		}
+		// if debugMode {
+		// 	log.Println("found", fname)
+		// }
 		date := parseDateFromFname(fname)
 		theUI.found = append(theUI.found, load(date))
 	}
-	theUI.foundList.UnselectAll()
-	theUI.foundList.Refresh()
+	// theUI.foundList.UnselectAll()
+	// theUI.foundList.Refresh()
 }
 
 func listSelected(id widget.ListItemID) {
@@ -125,9 +130,17 @@ func buildUI(u *ui) fyne.CanvasObject {
 	)
 	u.calendar = container.New(layout.NewCenterLayout(), NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
 	u.searchEntry = widget.NewEntry()
-	u.searchEntry.OnSubmitted = func(str string) {
-		find(str)
+	u.searchEntry.OnChanged = func(str string) {
+		u.found = []*note{}
+		if len(str) > 1 {
+			find(str)
+		}
+		u.foundList.UnselectAll()
+		u.foundList.Refresh()
 	}
+	// u.searchEntry.OnSubmitted = func(str string) {
+	// 	find(str)
+	// }
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	u.foundList = widget.NewList(
 		func() int {
@@ -198,7 +211,9 @@ func promptUserForBookDir() {
 			theUI.saveDirtyNote()
 			theUI.found = []*note{}
 			theUI.foundList.Refresh()
-			fmt.Println("setting theBookDir to", theBookDir)
+			if debugMode {
+				log.Println("setting theBookDir to", theBookDir)
+			}
 			theBookDir = selectedBook
 			theUI.setCurrent(load(time.Now()))
 			theUI.w.SetTitle("Gold Notebook - " + theBookDir)
@@ -278,7 +293,7 @@ func main() {
 	// }
 
 	if debugMode {
-		fmt.Println("home:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theBookDir)
+		log.Println("home:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theBookDir)
 	}
 
 	a := app.NewWithID("oddstream.goldnotebook")

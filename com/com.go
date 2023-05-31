@@ -7,9 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
 	"strings"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -30,12 +28,11 @@ const (
 )
 
 type ui struct {
-	current *incNote
-	found   []*incNote
+	current *comNote
+	found   []*comNote
 
 	w           fyne.Window
 	toolbar     *widget.Toolbar
-	calendar    *fyne.Container //*Calendar
 	searchEntry *widget.Entry
 	foundList   *widget.List
 	noteEntry   *widget.Entry
@@ -43,20 +40,22 @@ type ui struct {
 	// popUp        *widget.PopUp
 }
 
-type incNote struct {
+type comNote struct {
 	note.Note
-	date time.Time
+	title string
 }
 
-func (n *incNote) fname() string {
-	return path.Join(theUserHomeDir, theDataDir, "inc", theBookDir,
-		fmt.Sprintf("%04d", n.date.Year()),
-		fmt.Sprintf("%02d", n.date.Month()),
-		fmt.Sprintf("%02d.txt", n.date.Day()))
+func (n *comNote) fname() string {
+	return path.Join(theUserHomeDir, theDataDir, "com", theBookDir, n.title, ".txt")
 }
 
-func makeAndLoadNote(t time.Time) *incNote {
-	n := &incNote{date: t}
+func parseTitleFromFname(fname string) string {
+	filename, _ := path.Split(fname)
+	return strings.TrimSuffix(filename, ".txt")
+}
+
+func makeAndLoadNote(title string) *comNote {
+	n := &comNote{title: title}
 	fname := n.fname()
 	n.Load(fname)
 	return n
@@ -66,32 +65,12 @@ var (
 	theUI          *ui
 	theUserHomeDir string // eg /home/gilbert
 	theDataDir     string // eg .goldnotebook
-	theBookDir     string // eg Default
+	theBookDir     string // eg Common
 	debugMode      bool
 )
 
 func appTitle() string {
-	return "Incremental Notes - " + theBookDir
-}
-
-func parseDateFromFname(fname string) time.Time {
-	var t = time.Time{}
-	lst := strings.Split(fname, string(os.PathSeparator))
-	for i := 0; i < len(lst)-3; i++ {
-		if lst[i] == theBookDir {
-			if y, err := strconv.Atoi(lst[i+1]); err == nil {
-				if m, err := strconv.Atoi(lst[i+2]); err == nil {
-					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
-						if d, err := strconv.Atoi(f); err == nil {
-							t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-	return t
+	return "Commonplace Book - " + theBookDir
 }
 
 func (u *ui) saveDirtyNote() {
@@ -102,22 +81,9 @@ func (u *ui) saveDirtyNote() {
 	}
 }
 
-func (u *ui) setCurrent(n *incNote) {
+func (u *ui) setCurrent(n *comNote) {
 	theUI.current = n
 	theUI.noteEntry.SetText(theUI.current.Text)
-	theUI.calendar.Objects[0] = fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
-}
-
-func calendarTapped(t time.Time) {
-	theUI.saveDirtyNote()
-	theUI.setCurrent(makeAndLoadNote(t))
-	theUI.foundList.UnselectAll()
-}
-
-func calendarIsDateImportant(t time.Time) bool {
-	return t.Year() == theUI.current.date.Year() &&
-		t.Month() == theUI.current.date.Month() &&
-		t.Day() == theUI.current.date.Day()
 }
 
 func find(query string) {
@@ -126,19 +92,19 @@ func find(query string) {
 	}
 	// query = strings.ToLower(query)
 
-	theUI.found = []*incNote{}
+	theUI.found = []*comNote{}
 
 	opts := &search.SearchOptions{
 		Kind:   search.LITERAL,
 		Regex:  nil,
 		Finder: search.MakeStringFinder([]byte(query)),
 	}
-	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "inc", theBookDir)}, opts)
+	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
 	for _, fname := range results {
 		// if debugMode {
 		// 	log.Println("found", fname)
 		// }
-		n := makeAndLoadNote(parseDateFromFname(fname))
+		n := makeAndLoadNote(parseTitleFromFname(fname))
 		theUI.found = append(theUI.found, n)
 	}
 	// theUI.foundList.UnselectAll()
@@ -157,25 +123,10 @@ func buildUI(u *ui) fyne.CanvasObject {
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			promptUserForBookDir()
 		}),
-		widget.NewToolbarSeparator(),
-		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
-			t := theUI.current.date
-			t = t.Add(-time.Hour * 24)
-			calendarTapped(t)
-		}),
-		widget.NewToolbarAction(theme.HomeIcon(), func() {
-			calendarTapped(time.Now())
-		}),
-		widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
-			t := theUI.current.date
-			t = t.Add(time.Hour * 24)
-			calendarTapped(t)
-		}),
 	)
-	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.OnChanged = func(str string) {
-		u.found = []*incNote{}
+		u.found = []*comNote{}
 		if len(str) > 1 {
 			find(str)
 		}
@@ -200,9 +151,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	)
 	u.foundList.OnSelected = listSelected
 
-	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry)
-	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
-	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
+	side := container.New(layout.NewBorderLayout(u.searchEntry, nil, nil, nil), u.searchEntry, u.foundList)
 
 	u.noteEntry = widget.NewMultiLineEntry()
 	u.noteEntry.TextStyle = fyne.TextStyle{Monospace: true}
@@ -223,7 +172,7 @@ func promptUserForBookDir() {
 
 	// get a list of directories
 
-	homePath := path.Join(theUserHomeDir, theDataDir, "inc")
+	homePath := path.Join(theUserHomeDir, theDataDir, "com")
 	f, err := os.Open(homePath)
 	if err != nil {
 		log.Fatalf("couldn't open path %s: %s\n", homePath, err)
@@ -263,13 +212,13 @@ func promptUserForBookDir() {
 			}
 			if theBookDir != selectedBook {
 				theUI.saveDirtyNote()
-				theUI.found = []*incNote{}
+				theUI.found = []*comNote{}
 				theUI.foundList.Refresh()
 				if debugMode {
 					log.Println("setting theBookDir to", theBookDir)
 				}
 				theBookDir = selectedBook
-				theUI.setCurrent(makeAndLoadNote(time.Now()))
+				theUI.setCurrent(makeAndLoadNote("untitled"))
 				theUI.w.SetTitle(appTitle())
 			}
 		}
@@ -337,7 +286,7 @@ func main() {
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
-	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
+	flag.StringVar(&theBookDir, "book", "Common", "name of the book to open")
 	flag.Parse()
 	if *reportVersion {
 		fmt.Println(appName, appVersion)
@@ -360,25 +309,13 @@ func main() {
 	a.SetIcon(th.BookIcon())
 
 	w := a.NewWindow(appTitle())
-	theUI = &ui{w: w, current: makeAndLoadNote(time.Now())}
+	theUI = &ui{w: w, current: &comNote{}} // start with an empty note
 
-	// shortcuts get swallowed if focus is in the note multiline entry widget
-	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
-		theUI.w.Canvas().Focus(theUI.searchEntry)
-	})
-	// ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
-	// theUI.w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
-	// 	theUI.showMarkdownPopup(theUI.w.Canvas())
-	// })
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()
 	})
-	ctrlB := &desktop.CustomShortcut{KeyName: fyne.KeyB, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlB, func(shortcut fyne.Shortcut) {
-		promptUserForBookDir()
-	})
+
 	theUI.w.SetContent(buildUI(theUI))
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)

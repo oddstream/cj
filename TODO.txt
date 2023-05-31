@@ -1,4 +1,9 @@
+
 INCREMENTAL NOTES
+
+[ ] need to store inc and com notes in places they won't interfere with each other
+	/home/gilbert/.goldnotebook/inc/<BookName>/2023/04/29.txt
+	/home/gilbert/.goldnotebook/com/<BookName>/<title>.txt
 
 [ ] Switch between incremental and commonplace modes?
 	switch in toolbar

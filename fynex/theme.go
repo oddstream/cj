@@ -1,29 +1,33 @@
-package main
+package fynex
 
 import (
+	_ "embed"
 	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
 )
 
-type noteTheme struct {
+//go:embed icons/book-128.png
+var bookIconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
+
+type NoteTheme struct {
 }
 
-func (t *noteTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
+func (nt *NoteTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
 	return theme.DefaultTheme().Color(n, v)
 }
 
-func (m *noteTheme) Font(s fyne.TextStyle) fyne.Resource {
+func (nt *NoteTheme) Font(s fyne.TextStyle) fyne.Resource {
 	return theme.DefaultTextMonospaceFont()
 	// return theme.TextMonospaceFont()
 }
 
-func (m *noteTheme) Icon(n fyne.ThemeIconName) fyne.Resource {
+func (nt *NoteTheme) Icon(n fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(n)
 }
 
-func (m *noteTheme) Size(n fyne.ThemeSizeName) float32 {
+func (nt *NoteTheme) Size(n fyne.ThemeSizeName) float32 {
 
 	if n == theme.SizeNameText { // default SizeNameText is 12
 		// fmt.Println(theme.DefaultTheme().Size(n))
@@ -42,4 +46,11 @@ func (m *noteTheme) Size(n fyne.ThemeSizeName) float32 {
 		return theme.DefaultTheme().Size(n) + 2
 	}
 	return theme.DefaultTheme().Size(n)
+}
+
+func (nt *NoteTheme) BookIcon() fyne.Resource {
+	return &fyne.StaticResource{
+		StaticName:    "book.png",
+		StaticContent: bookIconBytes,
+	}
 }

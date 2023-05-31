@@ -13,7 +13,7 @@ import (
 )
 
 type note struct {
-	date time.Time // should never be IsZero()
+	date time.Time // will be IsZero() in commonplace book mode
 	text string    // the text of the note, when loaded
 }
 

@@ -1,11 +1,11 @@
-package main
+package fynex
 
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 )
 
-func newAdaptiveSplit(left, right fyne.CanvasObject) *fyne.Container {
+func NewAdaptiveSplit(left, right fyne.CanvasObject) *fyne.Container {
 	split := container.NewHSplit(left, right)
 	split.Offset = 0.25
 	return container.New(&adaptiveLayout{split: split}, split)

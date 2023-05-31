@@ -1,4 +1,4 @@
-package main
+package search
 
 // from https://healeycodes.com/beating-grep-with-go
 // from https://github.com/healeycodes/tools/tree/main/grup
@@ -18,19 +18,19 @@ const (
 	REGEX
 )
 
-type searchOptions struct {
-	kind   int
-	regex  *regexp.Regexp
-	finder *stringFinder
+type SearchOptions struct {
+	Kind   int
+	Regex  *regexp.Regexp
+	Finder *stringFinder
 }
 
 type searchJob struct {
 	path    string
-	opts    *searchOptions
+	opts    *SearchOptions
 	results *[]string
 }
 
-func Search(paths []string, opts *searchOptions) []string {
+func Search(paths []string, opts *SearchOptions) []string {
 	searchJobs := make(chan *searchJob)
 
 	results := []string{} // ADDED
@@ -47,7 +47,7 @@ func Search(paths []string, opts *searchOptions) []string {
 	return results // ADDED
 }
 
-func dirTraversal(path string, opts *searchOptions, results *[]string, searchJobs chan *searchJob, wg *sync.WaitGroup) {
+func dirTraversal(path string, opts *SearchOptions, results *[]string, searchJobs chan *searchJob, wg *sync.WaitGroup) {
 
 	info, err := os.Lstat(path)
 	if err != nil {
@@ -101,13 +101,13 @@ func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 				break // ADDED completely ignore binary files
 			}
 
-			if job.opts.kind == LITERAL {
-				if job.opts.finder.next(text) != -1 {
+			if job.opts.Kind == LITERAL {
+				if job.opts.Finder.next(text) != -1 {
 					*job.results = append(*job.results, job.path)
 					break // ADDED only find each file once
 				}
-			} else if job.opts.kind == REGEX {
-				if job.opts.regex.Find(scanner.Bytes()) != nil {
+			} else if job.opts.Kind == REGEX {
+				if job.opts.Regex.Find(scanner.Bytes()) != nil {
 					*job.results = append(*job.results, job.path)
 				}
 			}

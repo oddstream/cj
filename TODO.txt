@@ -1,5 +1,13 @@
 INCREMENTAL NOTES
 
+[ ] Switch between incremental and commonplace modes?
+	switch in toolbar
+	then use open book to structure
+	two apps, that can run side-by-side
+	seperate code bases
+	package fynex (calendar, theme, adaptive split)
+	package search
+[ ] open book needs to offer to create book
 [ ] search returns found word(s)?
 [ ] support for #tags
 	do a regexp search for "#[A-Za-z0-9]+ "

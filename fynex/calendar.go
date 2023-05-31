@@ -1,4 +1,4 @@
-package main
+package fynex
 
 import (
 	"math"

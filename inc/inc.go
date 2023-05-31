@@ -17,15 +17,14 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"oddstream.goldnotebook/fynex"
+	"oddstream.goldnotebook/search"
 )
 
 const (
 	appName    = "Goldnotebook"
 	appVersion = "0.1"
 )
-
-//go:embed icons/book-48.png
-var book48IconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
 
 type ui struct {
 	current *note
@@ -43,9 +42,9 @@ type ui struct {
 
 var (
 	theUI          *ui
-	theUserHomeDir string
-	theDataDir     string
-	theBookDir     string
+	theUserHomeDir string // eg /home/gilbert
+	theDataDir     string // eg .goldnotebook
+	theBookDir     string // eg Default
 	debugMode      bool
 )
 
@@ -60,11 +59,10 @@ func (u *ui) saveDirtyNote() {
 func (u *ui) setCurrent(n *note) {
 	theUI.current = n
 	theUI.noteEntry.SetText(theUI.current.text)
-	theUI.calendar.Objects[0] = NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
+	theUI.calendar.Objects[0] = fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
 }
 
 func calendarTapped(t time.Time) {
-	// fmt.Println("calendar callback", t)
 	theUI.saveDirtyNote()
 	theUI.setCurrent(load(t))
 	theUI.foundList.UnselectAll()
@@ -84,12 +82,12 @@ func find(query string) {
 
 	theUI.found = []*note{}
 
-	opts := &searchOptions{
-		kind:   LITERAL,
-		regex:  nil,
-		finder: MakeStringFinder([]byte(query)),
+	opts := &search.SearchOptions{
+		Kind:   search.LITERAL,
+		Regex:  nil,
+		Finder: search.MakeStringFinder([]byte(query)),
 	}
-	results := Search([]string{path.Join(theUserHomeDir, theDataDir, theBookDir)}, opts)
+	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, theBookDir)}, opts)
 	for _, fname := range results {
 		// if debugMode {
 		// 	log.Println("found", fname)
@@ -128,7 +126,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 			calendarTapped(t)
 		}),
 	)
-	u.calendar = container.New(layout.NewCenterLayout(), NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
+	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.OnChanged = func(str string) {
 		u.found = []*note{}
@@ -167,7 +165,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	mainPanel := container.New(layout.NewBorderLayout(u.toolbar, nil, nil, nil), u.toolbar, u.noteEntry)
 
 	// u.noteEntry.OnChanged = func(str string) { println(str) }
-	return newAdaptiveSplit(side, mainPanel)
+	return fynex.NewAdaptiveSplit(side, mainPanel)
 }
 
 // func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
@@ -202,21 +200,32 @@ func promptUserForBookDir() {
 	// }, w)
 
 	selectedBook := theBookDir
-	combo := widget.NewRadioGroup(bookDirs, func(book string) {
+
+	rgroup := widget.NewRadioGroup(bookDirs, func(book string) {
 		selectedBook = book
 	})
-	combo.Selected = theBookDir
-	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", combo, func(ok bool) {
-		if ok && theBookDir != selectedBook {
-			theUI.saveDirtyNote()
-			theUI.found = []*note{}
-			theUI.foundList.Refresh()
-			if debugMode {
-				log.Println("setting theBookDir to", theBookDir)
+	rgroup.Selected = theBookDir
+
+	// sel := widget.NewSelect(bookDirs, func(str string) { selectedBook = str })
+
+	entry := widget.NewEntry()
+	content := container.New(layout.NewVBoxLayout(), rgroup, entry)
+	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", content, func(ok bool) {
+		if ok {
+			if len(entry.Text) > 0 {
+				selectedBook = entry.Text
 			}
-			theBookDir = selectedBook
-			theUI.setCurrent(load(time.Now()))
-			theUI.w.SetTitle("Gold Notebook - " + theBookDir)
+			if theBookDir != selectedBook {
+				theUI.saveDirtyNote()
+				theUI.found = []*note{}
+				theUI.foundList.Refresh()
+				if debugMode {
+					log.Println("setting theBookDir to", theBookDir)
+				}
+				theBookDir = selectedBook
+				theUI.setCurrent(load(time.Now()))
+				theUI.w.SetTitle("Gold Notebook - " + theBookDir)
+			}
 		}
 	}, theUI.w)
 
@@ -282,26 +291,31 @@ func main() {
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
-	flag.StringVar(&theBookDir, "book", "Common", "name of the book to open")
+	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
 	flag.Parse()
 	if *reportVersion {
 		fmt.Println(appName, appVersion)
 		os.Exit(0)
 	}
-	// if len(flag.Args()) == 1 {
-	// 	theBookDir = flag.Args()[0]
-	// }
 
 	if debugMode {
-		log.Println("home:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theBookDir)
+		if str, err := os.Executable(); err != nil {
+			log.Printf("err: %T, %v\n", err, err)
+		} else {
+			log.Printf("str: %T, %v\n", str, str)
+		}
+		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theBookDir)
+		// log.Printf("meta: %T, %v\n", app.Metadata(), app.New().Metadata())
 	}
 
 	a := app.NewWithID("oddstream.goldnotebook")
-	a.SetIcon(&fyne.StaticResource{
-		StaticName:    "book-48.png",
-		StaticContent: book48IconBytes,
-	})
-	a.Settings().SetTheme(&noteTheme{})
+	// a.SetIcon(&fyne.StaticResource{
+	// 	StaticName:    "book-48.png",
+	// 	StaticContent: book48IconBytes,
+	// })
+	th := &fynex.NoteTheme{}
+	a.Settings().SetTheme(th)
+	a.SetIcon(th.BookIcon())
 
 	// if theBookDir is set on command line, don't ask the user for it
 

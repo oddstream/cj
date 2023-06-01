@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"flag"
 	"fmt"
@@ -53,6 +54,18 @@ func (n *incNote) fname() string {
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()),
 		fmt.Sprintf("%02d.txt", n.date.Day()))
+}
+
+func firstLine(text string) string {
+	var line string
+	scanner := bufio.NewScanner(strings.NewReader(text))
+	for scanner.Scan() {
+		line = scanner.Text()
+		if len(line) > 0 {
+			break
+		}
+	}
+	return line
 }
 
 func makeAndLoadNote(t time.Time) *incNote {
@@ -195,7 +208,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			// println("update widget.ListItemID", id)
-			obj.(*widget.Label).SetText(theUI.found[id].Title())
+			obj.(*widget.Label).SetText(firstLine(theUI.found[id].Text))
 		},
 	)
 	u.foundList.OnSelected = listSelected

@@ -1,21 +1,12 @@
 
 INCREMENTAL NOTES
 
-[ ] need to store inc and com notes in places they won't interfere with each other
-	/home/gilbert/.goldnotebook/inc/<BookName>/2023/04/29.txt
-	/home/gilbert/.goldnotebook/com/<BookName>/<title>.txt
-
-[ ] Switch between incremental and commonplace modes?
-	switch in toolbar
-	then use open book to structure
-	two apps, that can run side-by-side
-	seperate code bases
-	package fynex (calendar, theme, adaptive split)
-	package search
 [ ] open book needs to offer to create book
 [ ] search returns found word(s)?
+	good for more tag support
 [ ] support for #tags
-	do a regexp search for "#[A-Za-z0-9]+ "
+	do a regexp search for "#[A-Za-z0-9]+ " to find them all
+	then need to get found words from Search, not found pathnames
 [ ] fyne.AppMetaData
 [ ] app desktop icon
 	create a .desktop file in /usr/share/applications
@@ -56,7 +47,7 @@ First line of note becomes note filename
 Notes need a hierarchy, so new note prompts for directory
 	no directory | chosen directory | new directory
 
-
+[x] split into inc and com
 [x] search when input happens in search entry
 [x] app version and --version
 [x] Toolbar: | book | <prev day | today | next day> | preview

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"flag"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"unicode"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -42,23 +44,45 @@ type ui struct {
 
 type comNote struct {
 	note.Note
-	title string
+	title string // the title of this note WHEN LOADED (to detect filename changes)
 }
 
-func (n *comNote) fname() string {
-	return path.Join(theUserHomeDir, theDataDir, "com", theBookDir, n.title, ".txt")
+func sanitize(str string) string {
+	var b strings.Builder
+	for _, r := range str {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			b.WriteRune(r)
+		} else if unicode.IsSpace(r) {
+			b.WriteRune(' ')
+		} else {
+			b.WriteRune('_')
+		}
+	}
+	s := b.String()
+	s = strings.TrimSpace(s)
+	return s
 }
 
-func parseTitleFromFname(fname string) string {
-	filename, _ := path.Split(fname)
-	return strings.TrimSuffix(filename, ".txt")
+func firstLine(text string) string {
+	var line string
+	scanner := bufio.NewScanner(strings.NewReader(text))
+	for scanner.Scan() {
+		line = scanner.Text()
+		if len(line) > 0 {
+			break
+		}
+	}
+	return line
 }
 
-func makeAndLoadNote(title string) *comNote {
-	n := &comNote{title: title}
-	fname := n.fname()
-	n.Load(fname)
-	return n
+func makeFnameFromTitle(title string) string {
+	title = sanitize(title)
+	if title == "" {
+		title = "untitled"
+	}
+	fname := path.Join(theUserHomeDir, theDataDir, "com", theBookDir, title+".txt")
+	println("makeFnameFromTitle title:", title, "fname:", fname)
+	return fname
 }
 
 var (
@@ -76,8 +100,15 @@ func appTitle() string {
 func (u *ui) saveDirtyNote() {
 	newText := u.noteEntry.Text
 	if newText != u.current.Text {
+		oldTitle := u.current.title
+		newTitle := firstLine(newText)
 		u.current.Text = newText
-		u.current.Save(u.current.fname())
+		u.current.title = newTitle
+		u.current.Save(makeFnameFromTitle(newTitle))
+		if newTitle != oldTitle {
+			u.current.Remove(makeFnameFromTitle(oldTitle))
+		}
+		u.foundList.Refresh()
 	}
 }
 
@@ -101,14 +132,11 @@ func find(query string) {
 	}
 	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
 	for _, fname := range results {
-		// if debugMode {
-		// 	log.Println("found", fname)
-		// }
-		n := makeAndLoadNote(parseTitleFromFname(fname))
+		n := &comNote{}
+		n.Load(fname)
+		n.title = firstLine(n.Text)
 		theUI.found = append(theUI.found, n)
 	}
-	// theUI.foundList.UnselectAll()
-	// theUI.foundList.Refresh()
 }
 
 func listSelected(id widget.ListItemID) {
@@ -122,6 +150,10 @@ func buildUI(u *ui) fyne.CanvasObject {
 		// https://developer.fyne.io/explore/icons
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			promptUserForBookDir()
+		}),
+		widget.NewToolbarAction(theme.DocumentIcon(), func() {
+			theUI.saveDirtyNote()
+			theUI.setCurrent(&comNote{})
 		}),
 	)
 	u.searchEntry = widget.NewEntry()
@@ -146,7 +178,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			// println("update widget.ListItemID", id)
-			obj.(*widget.Label).SetText(theUI.found[id].Title())
+			obj.(*widget.Label).SetText(theUI.found[id].title)
 		},
 	)
 	u.foundList.OnSelected = listSelected
@@ -218,7 +250,7 @@ func promptUserForBookDir() {
 					log.Println("setting theBookDir to", theBookDir)
 				}
 				theBookDir = selectedBook
-				theUI.setCurrent(makeAndLoadNote("untitled"))
+				theUI.setCurrent(&comNote{})
 				theUI.w.SetTitle(appTitle())
 			}
 		}
@@ -286,7 +318,7 @@ func main() {
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
-	flag.StringVar(&theBookDir, "book", "Common", "name of the book to open")
+	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
 	flag.Parse()
 	if *reportVersion {
 		fmt.Println(appName, appVersion)
@@ -302,7 +334,7 @@ func main() {
 		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theBookDir)
 	}
 
-	a := app.NewWithID("oddstream.incrementalnotebook")
+	a := app.NewWithID("oddstream.commonplacebook")
 
 	th := &fynex.NoteTheme{}
 	a.Settings().SetTheme(th)

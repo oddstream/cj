@@ -111,6 +111,7 @@ func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 					// if found := job.opts.Regex.Find(scanner.Bytes()); found != nil {
 					// *job.results = append(*job.results, string(found))
 					for _, found := range founds {
+						// TODO use a map to eliminate duplicates
 						*job.results = append(*job.results, string(found))
 					}
 				}

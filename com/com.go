@@ -15,7 +15,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -140,25 +139,6 @@ func find(query string) {
 	}
 }
 
-func (u *ui) findHome() {
-	find("#home")
-	if len(u.found) == 0 {
-		n := &comNote{}
-		n.Text = `Commonplace Book
-
-Leonardo da Vinci kept all of his notes in one big book. If he liked something he put it down. This is known as a commonplace book, and it is about how detailed your note-taking system should be unless you plan on thinking more elaborately than Leonardo da Vinci.
-
-#home`
-		n.title = firstLine(n.Text)
-		u.found = append(u.found, n)
-		// TODO maybe save this?
-	}
-	u.setCurrent(u.found[0])
-	u.foundList.UnselectAll()
-	u.foundList.Refresh()
-	u.searchEntry.SetText("")
-}
-
 func listSelected(id widget.ListItemID) {
 	// log.Printf("list item %d selected", id)
 	theUI.saveDirtyNote()
@@ -168,15 +148,15 @@ func listSelected(id widget.ListItemID) {
 func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
-		widget.NewToolbarAction(theme.HomeIcon(), func() {
-			theUI.findHome()
-		}),
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			promptUserForBookDir()
 		}),
 		widget.NewToolbarAction(theme.DocumentIcon(), func() {
 			theUI.saveDirtyNote()
 			theUI.setCurrent(&comNote{})
+		}),
+		widget.NewToolbarAction(theme.SearchIcon(), func() {
+			theUI.searchForHashTags()
 		}),
 	)
 	u.searchEntry = widget.NewEntry()
@@ -250,86 +230,50 @@ func promptUserForBookDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	selectedBook := theBookDir
-
-	rgroup := widget.NewRadioGroup(bookDirs, func(book string) {
-		selectedBook = book
-	})
-	rgroup.Selected = theBookDir
-
-	// sel := widget.NewSelect(bookDirs, func(str string) { selectedBook = str })
-
-	entry := widget.NewEntry()
-	entry.PlaceHolder = "New Book"
-	content := container.New(layout.NewVBoxLayout(), rgroup, entry)
-	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", content, func(ok bool) {
-		if ok {
-			if len(entry.Text) > 0 {
-				selectedBook = entry.Text
-			}
-			if theBookDir != selectedBook {
-				theUI.saveDirtyNote()
-				theUI.found = []*comNote{}
-				theUI.foundList.Refresh()
-				if debugMode {
-					log.Println("setting theBookDir to", theBookDir)
-				}
-				theBookDir = selectedBook
-				theUI.setCurrent(&comNote{})
-				theUI.w.SetTitle(appTitle())
-			}
+	fynex.ShowListEntryPopUp(theUI.w.Canvas(), "Select Book", bookDirs, func(str string) {
+		if str == "" {
+			return
 		}
-	}, theUI.w)
+		theUI.saveDirtyNote()
+		theUI.found = []*comNote{}
+		theUI.foundList.Refresh()
+		if debugMode {
+			log.Println("setting theBookDir to", theBookDir)
+		}
+		theBookDir = str
+		theUI.setCurrent(&comNote{})
+		theUI.w.SetTitle(appTitle())
+	})
 
 	// widget.List is displayed in it's MinSize, which only displays one line...
 	// tried wrapping layout and list, which didn't fix it
+}
 
-	/*
-	   var selectedDir int
-	   lbox := widget.NewList(
+func (u *ui) injectSearch(query string) {
+	find(query)
+	if len(theUI.found) > 0 {
+		u.setCurrent(u.found[0])
 
-	   	func() int {
-	   		return len(bookDirs)
-	   	},
-	   	func() fyne.CanvasObject {
-	   		return widget.NewLabel("")
-	   	},
-	   	func(id widget.ListItemID, obj fyne.CanvasObject) {
-	   		// println("update widget.ListItemID", id)
-	   		obj.(*widget.Label).SetText(bookDirs[id])
-	   	},
+		u.searchEntry.Text = query
+		u.searchEntry.Refresh()
+		u.foundList.UnselectAll()
+		u.foundList.Select(0)
+		u.foundList.Refresh()
+	}
+}
 
-	   )
-
-	   	lbox.OnSelected = func(id int) {
-	   		selectedDir = id
-	   	}
-
-	   lbox.UnselectAll()
-
-	   	for i, d := range bookDirs {
-	   		if d == theBookDir {
-	   			lbox.Select(i)
-	   			lbox.ScrollTo(i)
-	   			break
-	   		}
-	   	}
-
-	   fmt.Println(lbox.MinSize()) // approx 32, 33
-	   // content := container.New(&DirListLayout{}, lbox)
-
-	   	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", lbox, func(ok bool) {
-	   		if !ok {
-	   			selectedDir = -1
-	   			fmt.Println("leaving theBookDir untouched")
-	   			return
-	   		} else {
-	   			theBookDir = bookDirs[selectedDir]
-	   			fmt.Println("setting theBookDir to", theBookDir)
-	   			return
-	   		}
-	   	}, w)
-	*/
+func (u *ui) searchForHashTags() {
+	opts := &search.SearchOptions{
+		Kind:   search.REGEX,
+		Regex:  regexp.MustCompile("#[[:alnum:]]+"),
+		Finder: nil,
+	}
+	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
+	if len(results) > 0 {
+		fynex.ShowListPopUp(theUI.w.Canvas(), "Find hashtag", results, func(str string) {
+			u.injectSearch(str)
+		})
+	}
 }
 
 func main() {
@@ -340,10 +284,12 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	var startSearch string
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
 	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
+	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()
 	if *reportVersion {
 		fmt.Println(appName, appVersion)
@@ -373,41 +319,18 @@ func main() {
 		theUI.saveDirtyNote()
 	})
 
-	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
-		opts := &search.SearchOptions{
-			Kind:   search.REGEX,
-			Regex:  regexp.MustCompile("#home"),
-			Finder: nil,
-		}
-		results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
-		for _, result := range results {
-			println(result)
-		}
-	})
-
-	ctrlH := &desktop.CustomShortcut{KeyName: fyne.KeyH, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlH, func(shortcut fyne.Shortcut) {
-		opts := &search.SearchOptions{
-			Kind:   search.REGEX,
-			Regex:  regexp.MustCompile("#[[:alnum:]]+"),
-			Finder: nil,
-		}
-		results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
-		fynex.ShowListPopUp(theUI.w.Canvas(), "Find hashtag", results, func(str string) {
-			find(str)
-			theUI.foundList.UnselectAll()
-			theUI.foundList.Refresh()
-		})
-	})
-
 	theUI.w.SetContent(buildUI(theUI))
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)
 
 	theUI.w.Resize(fyne.NewSize(1024, 640))
 
-	theUI.findHome()
+	if startSearch != "" {
+		if !strings.HasPrefix(startSearch, "#") {
+			startSearch = "#" + startSearch
+		}
+		theUI.injectSearch(startSearch)
+	}
 
 	theUI.w.CenterOnScreen()
 	theUI.w.ShowAndRun()

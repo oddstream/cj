@@ -31,7 +31,6 @@ func ShowListPopUp(canvas fyne.Canvas, title string, strs []string, okCallback f
 		currSel = str
 	})
 	ok := widget.NewButton("OK", func() {
-		// okCallback(testStrings[currSel])
 		okCallback(currSel)
 		pu.Hide()
 	})
@@ -44,6 +43,29 @@ func ShowListPopUp(canvas fyne.Canvas, title string, strs []string, okCallback f
 	pu.Show()
 }
 
-func ShowListEntryPopUp() string {
-	return ""
+func ShowListEntryPopUp(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
+	var pu *widget.PopUp
+	hdr := widget.NewLabel(title)
+	var currSel string
+	sel := widget.NewSelect(strs, func(str string) {
+		currSel = str
+	})
+	ent := widget.NewEntry()
+	ent.PlaceHolder = "New"
+	guts := container.New(layout.NewVBoxLayout(), sel, ent)
+	ok := widget.NewButton("OK", func() {
+		txt := ent.Text
+		if txt == "" {
+			txt = currSel
+		}
+		okCallback(txt)
+		pu.Hide()
+	})
+	cancel := widget.NewButton("Cancel", func() {
+		pu.Hide()
+	})
+	bottom := container.New(layout.NewGridLayout(2), ok, cancel)
+	content := container.New(layout.NewBorderLayout(hdr, bottom, nil, nil), hdr, bottom, guts)
+	pu = widget.NewModalPopUp(content, canvas)
+	pu.Show()
 }

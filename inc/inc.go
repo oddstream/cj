@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,7 +16,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -148,9 +148,6 @@ func find(query string) {
 	}
 	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "inc", theBookDir)}, opts)
 	for _, fname := range results {
-		// if debugMode {
-		// 	log.Println("found", fname)
-		// }
 		n := makeAndLoadNote(parseDateFromFname(fname))
 		theUI.found = append(theUI.found, n)
 	}
@@ -168,7 +165,10 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
-			promptUserForBookDir()
+			u.promptUserForBookDir()
+		}),
+		widget.NewToolbarAction(theme.SearchIcon(), func() {
+			theUI.searchForHashTags()
 		}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
@@ -232,7 +232,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 // 	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
 // }
 
-func promptUserForBookDir() {
+func (u *ui) promptUserForBookDir() {
 	var bookDirs []string
 
 	// get a list of directories
@@ -259,36 +259,20 @@ func promptUserForBookDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	selectedBook := theBookDir
-
-	rgroup := widget.NewRadioGroup(bookDirs, func(book string) {
-		selectedBook = book
-	})
-	rgroup.Selected = theBookDir
-
-	// sel := widget.NewSelect(bookDirs, func(str string) { selectedBook = str })
-
-	entry := widget.NewEntry()
-	entry.PlaceHolder = "New Book"
-	content := container.New(layout.NewVBoxLayout(), rgroup, entry)
-	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", content, func(ok bool) {
-		if ok {
-			if len(entry.Text) > 0 {
-				selectedBook = entry.Text
-			}
-			if theBookDir != selectedBook {
-				theUI.saveDirtyNote()
-				theUI.found = []*incNote{}
-				theUI.foundList.Refresh()
-				if debugMode {
-					log.Println("setting theBookDir to", theBookDir)
-				}
-				theBookDir = selectedBook
-				theUI.setCurrent(makeAndLoadNote(time.Now()))
-				theUI.w.SetTitle(appTitle())
-			}
+	fynex.ShowListEntryPopUp(u.w.Canvas(), "Select Book", bookDirs, func(str string) {
+		if str == "" {
+			return
 		}
-	}, theUI.w)
+		u.saveDirtyNote()
+		u.found = []*incNote{}
+		u.foundList.Refresh()
+		// if debugMode {
+		// 	log.Println("setting theBookDir to", theBookDir)
+		// }
+		theBookDir = str
+		u.setCurrent(&incNote{})
+		u.w.SetTitle(appTitle())
+	})
 
 	// widget.List is displayed in it's MinSize, which only displays one line...
 	// tried wrapping layout and list, which didn't fix it
@@ -341,6 +325,33 @@ func promptUserForBookDir() {
 	*/
 }
 
+func (u *ui) injectSearch(query string) {
+	find(query)
+	if len(theUI.found) > 0 {
+		u.setCurrent(u.found[0])
+
+		u.searchEntry.Text = query
+		u.searchEntry.Refresh()
+		u.foundList.UnselectAll()
+		u.foundList.Select(0)
+		u.foundList.Refresh()
+	}
+}
+
+func (u *ui) searchForHashTags() {
+	opts := &search.SearchOptions{
+		Kind:   search.REGEX,
+		Regex:  regexp.MustCompile("#[[:alnum:]]+"),
+		Finder: nil,
+	}
+	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "inc", theBookDir)}, opts)
+	if len(results) > 0 {
+		fynex.ShowListPopUp(theUI.w.Canvas(), "Find hashtag", results, func(str string) {
+			u.injectSearch(str)
+		})
+	}
+}
+
 func main() {
 	{
 		var err error
@@ -349,10 +360,12 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	var startSearch string // so com and inc have same command line flags
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
 	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
+	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()
 	if *reportVersion {
 		fmt.Println(appName, appVersion)
@@ -374,29 +387,24 @@ func main() {
 	a.Settings().SetTheme(th)
 	a.SetIcon(th.BookIcon())
 
-	w := a.NewWindow(appTitle())
-	theUI = &ui{w: w, current: makeAndLoadNote(time.Now())}
+	theUI = &ui{w: a.NewWindow(appTitle()), current: makeAndLoadNote(time.Now())}
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
-	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
-		theUI.w.Canvas().Focus(theUI.searchEntry)
-	})
-	// ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
-	// theUI.w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
-	// 	theUI.showMarkdownPopup(theUI.w.Canvas())
-	// })
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()
 	})
-	ctrlB := &desktop.CustomShortcut{KeyName: fyne.KeyB, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlB, func(shortcut fyne.Shortcut) {
-		promptUserForBookDir()
-	})
+
 	theUI.w.SetContent(buildUI(theUI))
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)
+
+	// if startSearch != "" {
+	// 	if !strings.HasPrefix(startSearch, "#") {
+	// 		startSearch = "#" + startSearch
+	// 	}
+	// 	theUI.injectSearch(startSearch)
+	// }
 
 	theUI.w.Resize(fyne.NewSize(1024, 640))
 	theUI.w.CenterOnScreen()

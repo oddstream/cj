@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"sync"
 )
 
@@ -30,6 +31,37 @@ type searchJob struct {
 	results *[]string
 }
 
+/*
+func removeDuplicates[T string | int](sliceList []T) []T {
+    allKeys := make(map[T]bool)
+    list := []T{}
+    for _, item := range sliceList {
+        if _, value := allKeys[item]; !value {
+            allKeys[item] = true
+            list = append(list, item)
+        }
+    }
+    return list
+}
+*/
+
+func removeDuplicateStrings(s []string) []string {
+	if len(s) < 1 {
+		return s
+	}
+
+	sort.Strings(s)
+	prev := 1
+	for curr := 1; curr < len(s); curr++ {
+		if s[curr-1] != s[curr] {
+			s[prev] = s[curr]
+			prev++
+		}
+	}
+
+	return s[:prev]
+}
+
 func Search(paths []string, opts *SearchOptions) []string {
 	searchJobs := make(chan *searchJob)
 
@@ -43,6 +75,10 @@ func Search(paths []string, opts *SearchOptions) []string {
 		dirTraversal(path, opts, &results, searchJobs, &wg)
 	}
 	wg.Wait()
+
+	if opts.Kind == REGEX {
+		results = removeDuplicateStrings(results)
+	}
 
 	return results // ADDED
 }

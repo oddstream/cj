@@ -81,7 +81,7 @@ func makeFnameFromTitle(title string) string {
 		title = "untitled"
 	}
 	fname := path.Join(theUserHomeDir, theDataDir, "com", theBookDir, title+".txt")
-	println("makeFnameFromTitle title:", title, "fname:", fname)
+	// println("makeFnameFromTitle title:", title, "fname:", fname)
 	return fname
 }
 
@@ -115,9 +115,10 @@ func (u *ui) saveDirtyNote() {
 func (u *ui) setCurrent(n *comNote) {
 	theUI.current = n
 	theUI.noteEntry.SetText(theUI.current.Text)
+	theUI.w.Canvas().Focus(theUI.noteEntry)
 }
 
-func find(query string) {
+func (u *ui) find(query string) {
 	if query == "" {
 		return
 	}
@@ -135,7 +136,7 @@ func find(query string) {
 		n := &comNote{}
 		n.Load(fname)
 		n.title = firstLine(n.Text)
-		theUI.found = append(theUI.found, n)
+		u.found = append(u.found, n)
 	}
 }
 
@@ -149,7 +150,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
-			promptUserForBookDir()
+			theUI.promptUserForBookDir()
 		}),
 		widget.NewToolbarAction(theme.DocumentIcon(), func() {
 			theUI.saveDirtyNote()
@@ -163,14 +164,14 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.searchEntry.OnChanged = func(str string) {
 		u.found = []*comNote{}
 		if len(str) > 1 {
-			find(str)
+			u.find(str)
 		}
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
 	}
 	u.searchEntry.PlaceHolder = "Search"
 	// u.searchEntry.OnSubmitted = func(str string) {
-	// 	find(str)
+	// 	u.find(str)
 	// }
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	u.foundList = widget.NewList(
@@ -203,7 +204,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 // 	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
 // }
 
-func promptUserForBookDir() {
+func (u *ui) promptUserForBookDir() {
 	var bookDirs []string
 
 	// get a list of directories
@@ -230,19 +231,19 @@ func promptUserForBookDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	fynex.ShowListEntryPopUp(theUI.w.Canvas(), "Select Book", bookDirs, func(str string) {
+	fynex.ShowListEntryPopUp(u.w.Canvas(), "Select Book", bookDirs, func(str string) {
 		if str == "" {
 			return
 		}
-		theUI.saveDirtyNote()
-		theUI.found = []*comNote{}
-		theUI.foundList.Refresh()
-		if debugMode {
-			log.Println("setting theBookDir to", theBookDir)
-		}
+		u.saveDirtyNote()
+		u.found = []*comNote{}
+		u.foundList.Refresh()
+		// if debugMode {
+		// 	log.Println("setting theBookDir to", theBookDir)
+		// }
 		theBookDir = str
-		theUI.setCurrent(&comNote{})
-		theUI.w.SetTitle(appTitle())
+		u.setCurrent(&comNote{})
+		u.w.SetTitle(appTitle())
 	})
 
 	// widget.List is displayed in it's MinSize, which only displays one line...
@@ -250,15 +251,16 @@ func promptUserForBookDir() {
 }
 
 func (u *ui) injectSearch(query string) {
-	find(query)
+	u.find(query)
 	if len(theUI.found) > 0 {
-		u.setCurrent(u.found[0])
-
 		u.searchEntry.Text = query
 		u.searchEntry.Refresh()
-		u.foundList.UnselectAll()
+
+		//		u.foundList.UnselectAll()
 		u.foundList.Select(0)
 		u.foundList.Refresh()
+
+		u.setCurrent(u.found[0])
 	}
 }
 
@@ -270,7 +272,7 @@ func (u *ui) searchForHashTags() {
 	}
 	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
 	if len(results) > 0 {
-		fynex.ShowListPopUp(theUI.w.Canvas(), "Find hashtag", results, func(str string) {
+		fynex.ShowListPopUp(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
 			u.injectSearch(str)
 		})
 	}
@@ -311,9 +313,9 @@ func main() {
 	a.Settings().SetTheme(th)
 	a.SetIcon(th.BookIcon())
 
-	w := a.NewWindow(appTitle())
-	theUI = &ui{w: w, current: &comNote{}} // start with an empty note
+	theUI = &ui{w: a.NewWindow(appTitle()), current: &comNote{}} // start with an empty note
 
+	// shortcuts get swallowed if focus is in the note multiline entry widget
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()
@@ -323,8 +325,6 @@ func main() {
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)
 
-	theUI.w.Resize(fyne.NewSize(1024, 640))
-
 	if startSearch != "" {
 		if !strings.HasPrefix(startSearch, "#") {
 			startSearch = "#" + startSearch
@@ -332,6 +332,7 @@ func main() {
 		theUI.injectSearch(startSearch)
 	}
 
+	theUI.w.Resize(fyne.NewSize(1024, 640))
 	theUI.w.CenterOnScreen()
 	theUI.w.ShowAndRun()
 

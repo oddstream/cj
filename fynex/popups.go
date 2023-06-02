@@ -26,19 +26,14 @@ func ShowListPopUp(canvas fyne.Canvas, title string, strs []string, okCallback f
 	// 	currSel = id
 	// }
 	hdr := widget.NewLabel(title)
-	var currSel string
 	sel := widget.NewSelect(strs, func(str string) {
-		currSel = str
-	})
-	ok := widget.NewButton("OK", func() {
-		okCallback(currSel)
+		okCallback(str)
 		pu.Hide()
 	})
 	cancel := widget.NewButton("Cancel", func() {
 		pu.Hide()
 	})
-	bottom := container.New(layout.NewGridLayout(2), ok, cancel)
-	content := container.New(layout.NewBorderLayout(hdr, bottom, nil, nil), hdr, bottom, sel)
+	content := container.New(layout.NewBorderLayout(hdr, cancel, nil, nil), hdr, cancel, sel)
 	pu = widget.NewModalPopUp(content, canvas)
 	pu.Show()
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -139,6 +140,25 @@ func find(query string) {
 	}
 }
 
+func (u *ui) findHome() {
+	find("#home")
+	if len(u.found) == 0 {
+		n := &comNote{}
+		n.Text = `Commonplace Book
+
+Leonardo da Vinci kept all of his notes in one big book. If he liked something he put it down. This is known as a commonplace book, and it is about how detailed your note-taking system should be unless you plan on thinking more elaborately than Leonardo da Vinci.
+
+#home`
+		n.title = firstLine(n.Text)
+		u.found = append(u.found, n)
+		// TODO maybe save this?
+	}
+	u.setCurrent(u.found[0])
+	u.foundList.UnselectAll()
+	u.foundList.Refresh()
+	u.searchEntry.SetText("")
+}
+
 func listSelected(id widget.ListItemID) {
 	// log.Printf("list item %d selected", id)
 	theUI.saveDirtyNote()
@@ -148,6 +168,9 @@ func listSelected(id widget.ListItemID) {
 func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
+		widget.NewToolbarAction(theme.HomeIcon(), func() {
+			theUI.findHome()
+		}),
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			promptUserForBookDir()
 		}),
@@ -165,6 +188,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
 	}
+	u.searchEntry.PlaceHolder = "Search"
 	// u.searchEntry.OnSubmitted = func(str string) {
 	// 	find(str)
 	// }
@@ -236,6 +260,7 @@ func promptUserForBookDir() {
 	// sel := widget.NewSelect(bookDirs, func(str string) { selectedBook = str })
 
 	entry := widget.NewEntry()
+	entry.PlaceHolder = "New Book"
 	content := container.New(layout.NewVBoxLayout(), rgroup, entry)
 	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", content, func(ok bool) {
 		if ok {
@@ -348,11 +373,42 @@ func main() {
 		theUI.saveDirtyNote()
 	})
 
+	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
+	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
+		opts := &search.SearchOptions{
+			Kind:   search.REGEX,
+			Regex:  regexp.MustCompile("#home"),
+			Finder: nil,
+		}
+		results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
+		for _, result := range results {
+			println(result)
+		}
+	})
+
+	ctrlH := &desktop.CustomShortcut{KeyName: fyne.KeyH, Modifier: fyne.KeyModifierControl}
+	theUI.w.Canvas().AddShortcut(ctrlH, func(shortcut fyne.Shortcut) {
+		opts := &search.SearchOptions{
+			Kind:   search.REGEX,
+			Regex:  regexp.MustCompile("#[[:alnum:]]+"),
+			Finder: nil,
+		}
+		results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
+		fynex.ShowListPopUp(theUI.w.Canvas(), "Find hashtag", results, func(str string) {
+			find(str)
+			theUI.foundList.UnselectAll()
+			theUI.foundList.Refresh()
+		})
+	})
+
 	theUI.w.SetContent(buildUI(theUI))
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)
 
 	theUI.w.Resize(fyne.NewSize(1024, 640))
+
+	theUI.findHome()
+
 	theUI.w.CenterOnScreen()
 	theUI.w.ShowAndRun()
 

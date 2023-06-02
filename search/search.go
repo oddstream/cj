@@ -107,8 +107,12 @@ func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 					break // ADDED only find each file once
 				}
 			} else if job.opts.Kind == REGEX {
-				if job.opts.Regex.Find(scanner.Bytes()) != nil {
-					*job.results = append(*job.results, job.path)
+				if founds := job.opts.Regex.FindAll(text, -1); founds != nil {
+					// if found := job.opts.Regex.Find(scanner.Bytes()); found != nil {
+					// *job.results = append(*job.results, string(found))
+					for _, found := range founds {
+						*job.results = append(*job.results, string(found))
+					}
 				}
 			}
 			line++

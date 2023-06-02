@@ -187,6 +187,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	)
 	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
 	u.searchEntry = widget.NewEntry()
+	u.searchEntry.PlaceHolder = "Search"
 	u.searchEntry.OnChanged = func(str string) {
 		u.found = []*incNote{}
 		if len(str) > 1 {
@@ -268,6 +269,7 @@ func promptUserForBookDir() {
 	// sel := widget.NewSelect(bookDirs, func(str string) { selectedBook = str })
 
 	entry := widget.NewEntry()
+	entry.PlaceHolder = "New Book"
 	content := container.New(layout.NewVBoxLayout(), rgroup, entry)
 	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", content, func(ok bool) {
 		if ok {

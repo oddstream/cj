@@ -1,9 +1,16 @@
 
-INCREMENTAL NOTES
+COM INC TODO
 
-[ ] open book needs to offer to create book
+[ ] cmd to search for all #hashtags, display popup list, click to search for that
+	func widget.ShowModalPopUp()
+	!!!maybe use ShowModalPopUp() to create choose book dialog with a listbox?
+	see the following source for dialog.FileOpen
+	https://github.com/fyne-io/fyne/blob/v2.3.4/dialog/file.go
+	https://github.com/fyne-io/fyne/blob/master/dialog/file.go
+[ ] .txt/.md switch?
 [ ] search returns found word(s)?
 	good for more tag support
+	maybe searching for a regex returns a list of found words
 [ ] support for #tags
 	do a regexp search for "#[A-Za-z0-9]+ " to find them all
 	then need to get found words from Search, not found pathnames
@@ -48,6 +55,8 @@ Notes need a hierarchy, so new note prompts for directory
 	no directory | chosen directory | new directory
 
 [x] split into inc and com
+[x] regex search returns list of found wordlets
+[x] open book needs to offer to create book
 [x] search when input happens in search entry
 [x] app version and --version
 [x] Toolbar: | book | <prev day | today | next day> | preview

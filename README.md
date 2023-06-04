@@ -1,8 +1,5 @@
 # Commonplace and Incremental
 
-Comminc
-Incom
-
 There is [a lot of note-taking software out there](https://en.wikipedia.org/wiki/Comparison_of_note-taking_software), and the trouble with most of it is that it's too darn complicated. Which is a shame, because note-taking is something a lot of people do with computers.
 
 There are simple exceptions like [Google Keep](https://keep.google.com/#home) and [thinktype](https://thinktype.app/) but it seems to me most of the big hitters become useless to most people because they require so much investment in learning how to use them.

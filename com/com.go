@@ -292,6 +292,7 @@ func main() {
 	})
 	// "global shortcuts don’t work when a shortcutable widget is focused"
 	// to add shortcuts to Shortcutable widgets, see
+	// https://developer.fyne.io/explore/shortcuts
 	// https://github.com/fyne-io/fyne/issues/2627
 	// func (e *Entry) TypedShortcut(shortcut fyne.Shortcut)
 	theUI.w.SetContent(buildUI(theUI))

@@ -59,4 +59,4 @@ zip -r $filename .goldnotebook
 
 ## History
 
-In the late 1990s, I wrote something called [Idealist](https://en.wikipedia.org/wiki/IdeaList) that's still being used.
+In the early 1990s, I wrote something called [Idealist](https://en.wikipedia.org/wiki/IdeaList).

@@ -14,6 +14,8 @@ var bookIconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
 type NoteTheme struct {
 }
 
+var _ fyne.Theme = (*NoteTheme)(nil)
+
 func (nt *NoteTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
 	return theme.DefaultTheme().Color(n, v)
 }

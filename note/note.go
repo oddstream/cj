@@ -13,10 +13,7 @@ type Note struct {
 
 func (n *Note) Load(fname string) {
 	// println("load", fname)
-	file, err := os.Open(fname)
-	if err != nil || file == nil {
-		log.Println(err)
-	} else {
+	if file, err := os.Open(fname); err == nil {
 		fi, err := file.Stat()
 		if err != nil {
 			log.Fatal(err, " getting FileInfo ", fname)

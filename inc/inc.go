@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	_ "embed"
 	"flag"
 	"fmt"
@@ -23,6 +22,7 @@ import (
 	"oddstream.goldnotebook/fynex"
 	"oddstream.goldnotebook/note"
 	"oddstream.goldnotebook/search"
+	"oddstream.goldnotebook/util"
 )
 
 const (
@@ -54,18 +54,6 @@ func (n *incNote) fname() string {
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()),
 		fmt.Sprintf("%02d.txt", n.date.Day()))
-}
-
-func firstLine(text string) string {
-	var line string
-	scanner := bufio.NewScanner(strings.NewReader(text))
-	for scanner.Scan() {
-		line = scanner.Text()
-		if len(line) > 0 {
-			break
-		}
-	}
-	return line
 }
 
 func makeAndLoadNote(t time.Time) *incNote {
@@ -133,13 +121,13 @@ func calendarIsDateImportant(t time.Time) bool {
 		t.Day() == theUI.current.date.Day()
 }
 
-func find(query string) {
+func (u *ui) find(query string) {
 	if query == "" {
 		return
 	}
 	// query = strings.ToLower(query)
 
-	theUI.found = []*incNote{}
+	u.found = []*incNote{}
 
 	opts := &search.SearchOptions{
 		Kind:   search.LITERAL,
@@ -149,10 +137,8 @@ func find(query string) {
 	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "inc", theBookDir)}, opts)
 	for _, fname := range results {
 		n := makeAndLoadNote(parseDateFromFname(fname))
-		theUI.found = append(theUI.found, n)
+		u.found = append(theUI.found, n)
 	}
-	// theUI.foundList.UnselectAll()
-	// theUI.foundList.Refresh()
 }
 
 func listSelected(id widget.ListItemID) {
@@ -191,13 +177,13 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.searchEntry.OnChanged = func(str string) {
 		u.found = []*incNote{}
 		if len(str) > 1 {
-			find(str)
+			u.find(str)
 		}
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
 	}
 	// u.searchEntry.OnSubmitted = func(str string) {
-	// 	find(str)
+	// 	u.find(str)
 	// }
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	u.foundList = widget.NewList(
@@ -209,7 +195,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			// println("update widget.ListItemID", id)
-			obj.(*widget.Label).SetText(firstLine(theUI.found[id].Text))
+			obj.(*widget.Label).SetText(util.FirstLine(theUI.found[id].Text))
 		},
 	)
 	u.foundList.OnSelected = listSelected
@@ -326,15 +312,15 @@ func (u *ui) promptUserForBookDir() {
 }
 
 func (u *ui) injectSearch(query string) {
-	find(query)
+	u.find(query)
 	if len(theUI.found) > 0 {
-		u.setCurrent(u.found[0])
-
 		u.searchEntry.Text = query
 		u.searchEntry.Refresh()
-		u.foundList.UnselectAll()
+
 		u.foundList.Select(0)
 		u.foundList.Refresh()
+
+		u.setCurrent(u.found[0])
 	}
 }
 

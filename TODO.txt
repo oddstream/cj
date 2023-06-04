@@ -5,6 +5,7 @@ COM INC TODO
 	https://github.com/fyne-io/fyne/blob/v2.3.4/dialog/file.go
 	https://github.com/fyne-io/fyne/blob/master/dialog/file.go
 
+[ ] could AddShortcut to widget.Entry canvas
 [ ] .txt/.md switch?
 [ ] more support for #tags?
 [ ] fyne.AppMetaData
@@ -37,9 +38,9 @@ go run -tags hints .go
 go run -tags mobile .go
 ```
 
-COMMONPLACE BOOK
+[ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
-"Leonardo da Vinci kept all of his notes in one big book. If he liked something he put it down. This is known as a commonplace book, and it is about how detailed your note-taking system should be unless you plan on thinking more elaborately than Leonardo da Vinci."
+COMMONPLACE BOOK
 
 Left pane is search entry and found list
 Right pane is toolbar (choose book? | new note) and multiline edit
@@ -93,4 +94,8 @@ FYNE PROBLEMS
 - Can't use Ctrl+Right/Left to move words
 - Waiting to implement widget tooltips (it's raised as an issue)
 - MultiLineEntry text rendering is uneven
+- Caret is too small
 - Can't highlight hit words or spelling errors
+- Text copied appears in other entry widgets, and other apps, but not in Ubuntu desktop
+- flicker when reshowing calendar (not all the time - when note gets saved?)
+- No Ctrl Z undo in entry widget

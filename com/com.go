@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	_ "embed"
 	"flag"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"path"
 	"regexp"
 	"strings"
-	"unicode"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -22,6 +20,7 @@ import (
 	"oddstream.goldnotebook/fynex"
 	"oddstream.goldnotebook/note"
 	"oddstream.goldnotebook/search"
+	"oddstream.goldnotebook/util"
 )
 
 const (
@@ -47,36 +46,8 @@ type comNote struct {
 	title string // the title of this note WHEN LOADED (to detect filename changes)
 }
 
-func sanitize(str string) string {
-	var b strings.Builder
-	for _, r := range str {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			b.WriteRune(r)
-		} else if unicode.IsSpace(r) {
-			b.WriteRune(' ')
-		} else {
-			b.WriteRune('_')
-		}
-	}
-	s := b.String()
-	s = strings.TrimSpace(s)
-	return s
-}
-
-func firstLine(text string) string {
-	var line string
-	scanner := bufio.NewScanner(strings.NewReader(text))
-	for scanner.Scan() {
-		line = scanner.Text()
-		if len(line) > 0 {
-			break
-		}
-	}
-	return line
-}
-
 func makeFnameFromTitle(title string) string {
-	title = sanitize(title)
+	title = util.Sanitize(title)
 	if title == "" {
 		title = "untitled"
 	}
@@ -101,7 +72,7 @@ func (u *ui) saveDirtyNote() {
 	newText := u.noteEntry.Text
 	if newText != u.current.Text {
 		oldTitle := u.current.title
-		newTitle := firstLine(newText)
+		newTitle := util.FirstLine(newText)
 		u.current.Text = newText
 		u.current.title = newTitle
 		u.current.Save(makeFnameFromTitle(newTitle))
@@ -135,7 +106,7 @@ func (u *ui) find(query string) {
 	for _, fname := range results {
 		n := &comNote{}
 		n.Load(fname)
-		n.title = firstLine(n.Text)
+		n.title = util.FirstLine(n.Text)
 		u.found = append(u.found, n)
 	}
 }
@@ -256,7 +227,6 @@ func (u *ui) injectSearch(query string) {
 		u.searchEntry.Text = query
 		u.searchEntry.Refresh()
 
-		//		u.foundList.UnselectAll()
 		u.foundList.Select(0)
 		u.foundList.Refresh()
 
@@ -320,7 +290,10 @@ func main() {
 	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()
 	})
-
+	// "global shortcuts don’t work when a shortcutable widget is focused"
+	// to add shortcuts to Shortcutable widgets, see
+	// https://github.com/fyne-io/fyne/issues/2627
+	// func (e *Entry) TypedShortcut(shortcut fyne.Shortcut)
 	theUI.w.SetContent(buildUI(theUI))
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)

@@ -7,34 +7,45 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func ShowListPopUp(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
+// func ShowListPopUp(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
+// 	var pu *widget.PopUp
+// 	hdr := widget.NewLabel(title)
+// 	sel := widget.NewSelect(strs, func(str string) {
+// 		okCallback(str)
+// 		pu.Hide()
+// 	})
+// 	cancel := widget.NewButton("Cancel", func() {
+// 		pu.Hide()
+// 	})
+// 	content := container.New(layout.NewBorderLayout(hdr, cancel, nil, nil), hdr, cancel, sel)
+// 	pu = widget.NewModalPopUp(content, canvas)
+// 	pu.Show()
+// }
+
+func ShowListPopUp2(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
 	var pu *widget.PopUp
-	// var currSel int
-	// lbox := widget.NewList(
-	// 	func() int {
-	// 		return len(testStrings)
-	// 	},
-	// 	func() fyne.CanvasObject {
-	// 		return widget.NewLabel("")
-	// 	},
-	// 	func(id widget.ListItemID, obj fyne.CanvasObject) {
-	// 		obj.(*widget.Label).SetText(testStrings[id])
-	// 	},
-	// )
-	// lbox.Select(currSel)
-	// lbox.OnSelected = func(id int) {
-	// 	currSel = id
-	// }
 	hdr := widget.NewLabel(title)
-	sel := widget.NewSelect(strs, func(str string) {
-		okCallback(str)
+	lbox := widget.NewList(
+		func() int {
+			return len(strs)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(id widget.ListItemID, obj fyne.CanvasObject) {
+			obj.(*widget.Label).SetText(strs[id])
+		},
+	)
+	lbox.OnSelected = func(id int) {
+		okCallback(strs[id])
 		pu.Hide()
-	})
+	}
 	cancel := widget.NewButton("Cancel", func() {
 		pu.Hide()
 	})
-	content := container.New(layout.NewBorderLayout(hdr, cancel, nil, nil), hdr, cancel, sel)
+	content := container.New(layout.NewBorderLayout(hdr, cancel, nil, nil), hdr, lbox, cancel)
 	pu = widget.NewModalPopUp(content, canvas)
+	pu.Resize(fyne.NewSize(200, 320))
 	pu.Show()
 }
 

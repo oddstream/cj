@@ -35,7 +35,7 @@ The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) an
 
 ## Implementation
 
-`com` and `inc` are written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library. The search code is copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go). There's no indexing or anything fancy going on under the hood - this is essentially a text editor and grep.
+`com` and `inc` are written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library. The search code is copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go). There's no indexing or anything fancy going on under the hood - what we have here is a text editor, grep and a simple user interface.
 
 ## Local File Storage
 
@@ -56,10 +56,13 @@ zip -r $filename .goldnotebook
 
 ## TODO
 
-- Better text editor (including found word highlighting and spellchecking)
-- Markdown support
-- More support for hashtags
-- More support for creating backups
+- Better text editor (including spellchecking, found word highlighting, more visible caret, more keyboard shortcuts)
+- The current search is very efficient, but case sensitive
+- Support for moving text from `inc` to `com`, to facilitate short term to long term note workflow; maybe right-click popup 'copy selected text to commonplace book' ...
+- The 'choose a hashtag' dialog uses a select widget, which should really be a list widget
+- Markdown support in `com`
+- More support for hashtags?
+- Support for creating backups, or git, or cloud (Fyne has some cloud support)
 - Many little quality-of-life tweaks
 
 ## History

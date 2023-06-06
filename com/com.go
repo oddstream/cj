@@ -242,7 +242,7 @@ func (u *ui) searchForHashTags() {
 	}
 	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
 	if len(results) > 0 {
-		fynex.ShowListPopUp(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
+		fynex.ShowListPopUp2(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
 			u.injectSearch(str)
 		})
 	}

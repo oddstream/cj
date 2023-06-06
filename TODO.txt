@@ -20,8 +20,8 @@ COM INC TODO
 [ ] func NewRichTextFromMarkdown(content string) *RichText
 	RichText can't be edited, but could be used as pop-up display of a Markdown note
 
-[ ] choose between a incremental notebook and a commonplace book
 [ ] autocomplete https://addons.fyne.io/addons/io.fyne-x.completion-entry.html
+	based on https://pkg.go.dev/fyne.io/x/fyne/widget#CompletionEntry
 [ ] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
 	my favorite color was red, now it's blue
 [ ]	List names of .goldnotebook subdirectories at start; choose one

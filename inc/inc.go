@@ -238,8 +238,6 @@ func (u *ui) promptUserForBookDir() {
 		return
 	}
 
-	// magic up a list box
-
 	// this looks fugly and opens up in the home directory and doesn't show hidden directories
 	// dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
 	// 	fmt.Println(uri)
@@ -259,56 +257,6 @@ func (u *ui) promptUserForBookDir() {
 		u.setCurrent(&incNote{})
 		u.w.SetTitle(appTitle())
 	})
-
-	// widget.List is displayed in it's MinSize, which only displays one line...
-	// tried wrapping layout and list, which didn't fix it
-
-	/*
-	   var selectedDir int
-	   lbox := widget.NewList(
-
-	   	func() int {
-	   		return len(bookDirs)
-	   	},
-	   	func() fyne.CanvasObject {
-	   		return widget.NewLabel("")
-	   	},
-	   	func(id widget.ListItemID, obj fyne.CanvasObject) {
-	   		// println("update widget.ListItemID", id)
-	   		obj.(*widget.Label).SetText(bookDirs[id])
-	   	},
-
-	   )
-
-	   	lbox.OnSelected = func(id int) {
-	   		selectedDir = id
-	   	}
-
-	   lbox.UnselectAll()
-
-	   	for i, d := range bookDirs {
-	   		if d == theBookDir {
-	   			lbox.Select(i)
-	   			lbox.ScrollTo(i)
-	   			break
-	   		}
-	   	}
-
-	   fmt.Println(lbox.MinSize()) // approx 32, 33
-	   // content := container.New(&DirListLayout{}, lbox)
-
-	   	dialog.ShowCustomConfirm("Select Book", "OK", "Cancel", lbox, func(ok bool) {
-	   		if !ok {
-	   			selectedDir = -1
-	   			fmt.Println("leaving theBookDir untouched")
-	   			return
-	   		} else {
-	   			theBookDir = bookDirs[selectedDir]
-	   			fmt.Println("setting theBookDir to", theBookDir)
-	   			return
-	   		}
-	   	}, w)
-	*/
 }
 
 func (u *ui) injectSearch(query string) {

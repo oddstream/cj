@@ -67,8 +67,8 @@ zip -r $filename .goldnotebook
 
 ## History
 
-In the early 1990s, I wrote something called [Idealist](https://en.wikipedia.org/wiki/IdeaList). That grew out of the idea of merging database and text editor functionality, and morphed eventually into a package of components that were used to build applications in the museum, archive, and library sectors. I, like many others, just used it to take notes.
+In the early 1990s, I wrote something called [Idealist](https://en.wikipedia.org/wiki/IdeaList). That grew out of the idea of merging a database manager and a text editor, and morphed eventually into a package of components that were used to build applications in the museum, archive, and library sectors. I, like many others, just used it to take notes.
 
 Everytime I use a computer, I end up taking notes. Playing a game, developing a new app, doing finances, reading about the worldwide political horrorshows, building bicycles, planning a vegetable garden, following a tv series, reading a book, ... everything seems to generate notes.
 
-So I've spent decades trying different ways of doing that, trying different apps and methodologies, storing files all over the place and eventually losing them, or not being able to transfer them into the shiny new fashionable app. Idealist is too old, only runs on Windows, and I don't have the source, so I can't use that. After years of nagging at myself, I surrendered to the itch and am developing my own new app(s), to fit my needs, and trying really hard to do it in the simplest way possible. Because plain and simple are good.
+So, I've spent decades trying different ways of doing that, trying different apps and methodologies, storing files all over the place and eventually losing them, or not being able to transfer them into the shiny new fashionable app. Idealist is too old, only runs on Windows, and I don't have the source, so I can't use that. After years of nagging at myself, I surrendered to the itch and am developing my own new app(s), to fit my needs, and trying really hard to do it in the simplest way possible. Because plain and simple are good.

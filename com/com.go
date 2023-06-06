@@ -195,8 +195,6 @@ func (u *ui) promptUserForBookDir() {
 		return
 	}
 
-	// magic up a list box
-
 	// this looks fugly and opens up in the home directory and doesn't show hidden directories
 	// dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
 	// 	fmt.Println(uri)
@@ -216,9 +214,6 @@ func (u *ui) promptUserForBookDir() {
 		u.setCurrent(&comNote{})
 		u.w.SetTitle(appTitle())
 	})
-
-	// widget.List is displayed in it's MinSize, which only displays one line...
-	// tried wrapping layout and list, which didn't fix it
 }
 
 func (u *ui) injectSearch(query string) {

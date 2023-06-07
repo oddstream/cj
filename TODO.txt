@@ -5,9 +5,14 @@ COM INC TODO
 	https://github.com/fyne-io/fyne/blob/v2.3.4/dialog/file.go
 	https://github.com/fyne-io/fyne/blob/master/dialog/file.go
 
+[ ] rname from goldnotebook to something else cominc incom incomp increcom nincomp(oop)
+[ ] func NewRichTextFromMarkdown(content string) *RichText
+	RichText can't be edited, but could be used as pop-up display of a Markdown note
+	so open a preview pane to the right of the MultiLineEntry pane
+[ ] Entry.SetMinRowsVisible
 [ ] could AddShortcut to widget.Entry canvas
 [ ] .txt/.md switch?
-[ ] more support for #tags?
+[ ] more support for #tags? insert from dict?
 [ ] fyne.AppMetaData
 [ ] app desktop icon
 	create a .desktop file in /usr/share/applications
@@ -17,8 +22,14 @@ COM INC TODO
 [ ] Backup to .zip file 'goldnotebook<date of backup>.zip'
 [ ] found list has two columns: date (ISO 8601) and text (first line)?
 [ ] follow url link in text
-[ ] func NewRichTextFromMarkdown(content string) *RichText
-	RichText can't be edited, but could be used as pop-up display of a Markdown note
+	find all url in text
+	https://stackoverflow.com/questions/6038061/regular-expression-to-find-urls-within-a-string
+	show list of found urls in a popup, click to follow
+	...the list would look nasty, and be very wide
+	- or -
+	extend selection forwards & backwards to cover a url (step 1, testable)
+	func (e *Entry) SelectedText() string
+	follow selected url
 
 [ ] autocomplete https://addons.fyne.io/addons/io.fyne-x.completion-entry.html
 	based on https://pkg.go.dev/fyne.io/x/fyne/widget#CompletionEntry

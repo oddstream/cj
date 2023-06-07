@@ -75,3 +75,10 @@ func ShowListEntryPopUp(canvas fyne.Canvas, title string, strs []string, okCallb
 	pu = widget.NewModalPopUp(content, canvas)
 	pu.Show()
 }
+
+func ShowMarkdownPopup(parentCanvas fyne.Canvas, text string) {
+	mkdn := widget.NewRichTextFromMarkdown(text)
+	content := container.New(layout.NewBorderLayout(nil, nil, nil, nil), mkdn)
+	pu := widget.NewPopUp(content, parentCanvas)
+	pu.Show()
+}

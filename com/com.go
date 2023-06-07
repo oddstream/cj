@@ -17,14 +17,14 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"oddstream.goldnotebook/fynex"
-	"oddstream.goldnotebook/note"
-	"oddstream.goldnotebook/search"
-	"oddstream.goldnotebook/util"
+	"oddstream.nincomp/fynex"
+	"oddstream.nincomp/note"
+	"oddstream.nincomp/search"
+	"oddstream.nincomp/util"
 )
 
 const (
-	appName    = "Goldnotebook"
+	appName    = "Nincomp"
 	appVersion = "0.1"
 )
 
@@ -59,8 +59,8 @@ func makeFnameFromTitle(title string) string {
 var (
 	theUI          *ui
 	theUserHomeDir string // eg /home/gilbert
-	theDataDir     string // eg .goldnotebook
-	theBookDir     string // eg Common
+	theDataDir     string // eg .noncomp
+	theBookDir     string // eg Default
 	debugMode      bool
 )
 
@@ -171,10 +171,6 @@ func buildUI(u *ui) fyne.CanvasObject {
 	return fynex.NewAdaptiveSplit(side, mainPanel)
 }
 
-// func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
-// 	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
-// }
-
 func (u *ui) promptUserForBookDir() {
 	var bookDirs []string
 
@@ -254,7 +250,7 @@ func main() {
 	var startSearch string
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
-	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
+	flag.StringVar(&theDataDir, "data", ".nincomp", "name of the data directory")
 	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
 	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()
@@ -281,6 +277,11 @@ func main() {
 	theUI = &ui{w: a.NewWindow(appTitle()), current: &comNote{}} // start with an empty note
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
+	ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
+	theUI.w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
+		fynex.ShowMarkdownPopup(theUI.w.Canvas(), theUI.current.Text)
+	})
+
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()

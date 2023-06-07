@@ -1,4 +1,4 @@
-module oddstream.goldnotebook
+module oddstream.nincomp
 
 go 1.19
 

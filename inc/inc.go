@@ -19,14 +19,14 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"oddstream.goldnotebook/fynex"
-	"oddstream.goldnotebook/note"
-	"oddstream.goldnotebook/search"
-	"oddstream.goldnotebook/util"
+	"oddstream.nincomp/fynex"
+	"oddstream.nincomp/note"
+	"oddstream.nincomp/search"
+	"oddstream.nincomp/util"
 )
 
 const (
-	appName    = "Goldnotebook"
+	appName    = "Nincomp"
 	appVersion = "0.1"
 )
 
@@ -40,8 +40,6 @@ type ui struct {
 	searchEntry *widget.Entry
 	foundList   *widget.List
 	noteEntry   *widget.Entry
-
-	// popUp        *widget.PopUp
 }
 
 type incNote struct {
@@ -66,7 +64,7 @@ func makeAndLoadNote(t time.Time) *incNote {
 var (
 	theUI          *ui
 	theUserHomeDir string // eg /home/gilbert
-	theDataDir     string // eg .goldnotebook
+	theDataDir     string // eg .nincomp
 	theBookDir     string // eg Default
 	debugMode      bool
 )
@@ -297,7 +295,7 @@ func main() {
 	var startSearch string // so com and inc have same command line flags
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
-	flag.StringVar(&theDataDir, "data", ".goldnotebook", "name of the data directory")
+	flag.StringVar(&theDataDir, "data", ".nincomp", "name of the data directory")
 	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
 	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()

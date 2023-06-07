@@ -1,4 +1,4 @@
-# Commonplace and Incremental Notes - Work in Progress!
+# Nincomp - Commonplace and Incremental Notes - Work in Progress!
 
 There is [a lot of note-taking software out there](https://en.wikipedia.org/wiki/Comparison_of_note-taking_software), and the trouble with most of it is that it's too darn complicated. Which is a shame, because note-taking is something a lot of people do with computers.
 
@@ -39,29 +39,29 @@ The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) an
 
 ## Local File Storage
 
-All the notes are stored as text files in a directory tree. The root is `.goldnotebook`.
+All the notes are stored as text files in a directory tree. The root is `.nincomp`.
 
-The commonplace notes are stored in a subtree of that called `com`, which contains a number of directories, one for each book. The default book is called `Default`. Inside each book directory are text files, with the name of the file being a santitized version of the first line of each note. For example, if you had a note on cooking tips in the default book, it would be stored in a file called `.goldnotebook/com/Default/Cooking Tips.txt`.
+The commonplace notes are stored in a subtree of that called `com`, which contains a number of directories, one for each book. The default book is called `Default`. Inside each book directory are text files, with the name of the file being a santitized version of the first line of each note. For example, if you had a note on cooking tips in the default book, it would be stored in a file called `.nincomp/com/Default/Cooking Tips.txt`.
 
-The sequential notes are stored in a subtree called `inc`, which contains a number of directories, one for each book. The default book is called `Default`. Inside each book directory are directories for each year, and inside each of those, directories for each month. Each month directory contains text files for each day of the month. For example, if you made a note on January 5th 2023 in the default book, it would be stored in a file called `.goldnotebook/inc/Default/2023/01/05.txt`.
+The sequential notes are stored in a subtree called `inc`, which contains a number of directories, one for each book. The default book is called `Default`. Inside each book directory are directories for each year, and inside each of those, directories for each month. Each month directory contains text files for each day of the month. For example, if you made a note on January 5th 2023 in the default book, it would be stored in a file called `.nincomp/inc/Default/2023/01/05.txt`.
 
-You can shadow the entire `.goldnotebook` directory tree in cloud storage, archive them in a [git](https://git-scm.com/) repository (which you can upload to a private github repository), or backup all the notes using, rsync or zip, for example, `zip -r <filename> .goldnotebook`. I use a little bash script to name the backup files after the date they were made, for example:
+You can shadow the entire `.nincomp` directory tree in cloud storage, archive them in a [git](https://git-scm.com/) repository (which you can upload to a private github repository), or backup all the notes using, rsync or zip, for example, `zip -r <filename> .nincomp`. I use a little bash script to name the backup files after the date they were made, for example:
 
 ```bash
 today=`date +%Y-%m-%d`
-filename="goldnotebook$today.zip"
+filename="nincomp$today.zip"
 cd ~
-zip -r $filename .goldnotebook
+zip -r $filename .nincomp
 ```
 
 ## TODO
 
-- Better text editor (including spellchecking, found word highlighting, more visible caret, more keyboard shortcuts)
+- Better text editor (including spellchecking, found word highlighting, follow url, more visible caret, more keyboard shortcuts)
 - The current search is very efficient, but case sensitive
 - Support for moving text from `inc` to `com`, to facilitate short term to long term note workflow; maybe right-click popup 'copy selected text to commonplace book' ...
 - The 'choose a hashtag' dialog uses a select widget, which should really be a list widget
 - Markdown support in `com`
-- More support for hashtags?
+- More support for hashtags (eg insert hashtag from dict)?
 - Support for creating backups, or git, or cloud (Fyne has some cloud support)
 - Many little quality-of-life tweaks
 

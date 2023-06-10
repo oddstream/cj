@@ -18,7 +18,7 @@ The aim here is to make something that explicitly covers commonplace books and i
 
 `com` is a simple app that allows you to write and retrieve commonplace book notes. You can have more than one commonplace book; the default one is called `Default`, but you can create others.
 
-![screenshot](https://github.com/oddstream/nincomp/blob/d6909fcd888d94aadec1d619def96643d1abe500/screenshots/com.png)
+![screenshot](https://github.com/oddstream/nincomp/blob/60129c47db7d5926ad494b3f07d4f9d84d6ef988/screenshots/com.png)
 
 The user interface only has four elements:
 

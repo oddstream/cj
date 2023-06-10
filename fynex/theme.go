@@ -34,9 +34,9 @@ func (nt *NoteTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Col
 }
 
 func (nt *NoteTheme) Font(s fyne.TextStyle) fyne.Resource {
-	// return theme.DefaultTextMonospaceFont()
+	return theme.DefaultTextMonospaceFont()
 	// return theme.TextMonospaceFont()
-	return resourceFontTtf
+	// return resourceFontTtf
 }
 
 func (nt *NoteTheme) Icon(n fyne.ThemeIconName) fyne.Resource {

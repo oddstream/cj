@@ -12,7 +12,7 @@ There are simple exceptions like [Google Keep](https://keep.google.com/#home) an
 
 The aim here is to make something that explicitly covers commonplace books and incremental notes, and enable the functionality of zettelkasten using hashtags. After playing around with some designs for a while, I thought it might work to split commonplace books and incremental notes into two similar apps, so that they can be run side-by-side, so text can be cut and pasted between them.
 
-## [](https://github.com/oddstream/nincomp/blob/c0d295184d2c390e504c616dad4bf3fde86c970d/fynex/icons/book-128.png) com
+## ![icon](https://github.com/oddstream/nincomp/blob/c0d295184d2c390e504c616dad4bf3fde86c970d/fynex/icons/book-128.png) com
 
 `com` is a simple app that allows you to write and retrieve commonplace book notes. You can have more than one commonplace book; the default one is called `Default`, but you can create others.
 

@@ -74,9 +74,9 @@ No tricksy or closed file formats here, no sir.
 - The current search is very efficient, but case sensitive
 - Support for moving text from `inc` to `com`, to facilitate short term to long term note workflow; maybe right-click popup 'copy selected text to commonplace book' ...
 - Markdown support in `com` (fyne does have a markdown preview widget, but it's markdown support is, shall we say, basic). I *really* like WYSIWIG markdown editors like MarkText or Typora.
-- More support for hashtags (eg insert hashtag from dict)?
+- More support for hashtags (eg tap on a hashtag to find notes containing it, insert hashtag from dict)?
 - Support for creating backups, or git, or cloud (Fyne has some cloud support)
-- Many little quality-of-life tweaks
+- Many little quality-of-life tweaks like colors, keyboard shortcuts, and setting the font.
 
 ## History
 

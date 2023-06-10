@@ -16,7 +16,7 @@ The aim here is to make something that explicitly covers commonplace books and i
 
 `com` is a simple app that allows you to write and retrieve commonplace book notes. You can have more than one commonplace book; the default one is called `Default`, but you can create others.
 
-![screenshot]()
+![screenshot](https://github.com/oddstream/nincomp/blob/d6909fcd888d94aadec1d619def96643d1abe500/screenshots/com.png)
 
 The user interface only has four elements:
 
@@ -29,7 +29,7 @@ The user interface only has four elements:
 
 `inc` is a simple app that allows you to write and retrieve incremental notes. You can have more than one notebook; the default one is called `Default`, but you can create others.
 
-![screenshot]()
+![screenshot](https://github.com/oddstream/nincomp/blob/d6909fcd888d94aadec1d619def96643d1abe500/screenshots/inc.png)
 
 The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) and from using [rednotebook](https://rednotebook.app) for a while.
 

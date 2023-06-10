@@ -315,7 +315,7 @@ func main() {
 
 	a := app.NewWithID("oddstream.incrementalnotebook")
 
-	th := &fynex.NoteTheme{}
+	th := &fynex.NoteTheme{FontSize: 15.0, IconName: "today"}
 	a.Settings().SetTheme(th)
 	a.SetIcon(th.BookIcon())
 

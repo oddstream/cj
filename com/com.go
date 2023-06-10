@@ -120,6 +120,9 @@ func listSelected(id widget.ListItemID) {
 func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
+		// widget.NewToolbarAction(theme.MenuIcon(), func() {
+		// 	fynex.ShowMenuPopup(theUI.w.Canvas(), u.toolbar)
+		// }),
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			theUI.promptUserForBookDir()
 		}),
@@ -270,7 +273,7 @@ func main() {
 
 	a := app.NewWithID("oddstream.commonplacebook")
 
-	th := &fynex.NoteTheme{}
+	th := &fynex.NoteTheme{FontSize: 15.0, IconName: "book"}
 	a.Settings().SetTheme(th)
 	a.SetIcon(th.BookIcon())
 

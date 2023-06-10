@@ -10,7 +10,7 @@ There are simple exceptions like [Google Keep](https://keep.google.com/#home) an
 2. [Zettelkasten](https://en.wikipedia.org/wiki/Zettelkasten) or a card file: small items of information stored on paper slips or cards that may be linked to each other through subject headings or other metadata such as numbers and tags.
 3. [Incremental notes](https://thesephist.com/posts/inc/) are like a diary, but for notes: start a new page every day and fill it with what you're doing, not doing, or reading, or whatever.
 
-The aim here is to make something that explicitly covers commonplace books and incremental notes, and enable the functionality of zettelkasten using hashtags. After playing around with some designs for a while, I thought it might work to split commonplace books and incremental notes into two similar apps, so that they can be run side-by-side, so text can be cut and pasted between them. The workflow being to start by entering text into the daily note, and then pasting it to a section in a commonplace book if that information endured.
+The aim here is to make something that explicitly covers commonplace books and incremental notes, and enable the functionality of zettelkasten using hashtags. After playing around with some designs for a while, I thought it might work to split commonplace books and incremental notes into two similar apps, so that they can be run side-by-side, so text can be cut and pasted between them.
 
 ## com
 
@@ -28,6 +28,10 @@ The user interface only has four elements:
 `inc` is a simple app that allows you to write and retrieve incremental notes. You can have more than one notebook; the default one is called `Default`, but you can create others.
 
 The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) and from using [rednotebook](https://rednotebook.app) for a while.
+
+## Workflow
+
+The general idea is have an instance of `inc` open, where you put notes and bits of text as they come up during the day. (You can have more than one instance of `inc` open, one for each book, if you use multiple books.) Then, have one or more instances of `com` open, and copy-and-paste text from `inc` to `com` as that information endures or needs categorization.
 
 ## markdown
 

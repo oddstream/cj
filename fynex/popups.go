@@ -82,3 +82,18 @@ func ShowMarkdownPopup(parentCanvas fyne.Canvas, text string) {
 	pu := widget.NewPopUp(content, parentCanvas)
 	pu.Show()
 }
+
+var popupMenu *widget.PopUpMenu
+
+func ShowMenuPopup(parentCanvas fyne.Canvas, parent *widget.Toolbar) {
+	// NewPopUpMenu creates a new, reusable popup menu. You can show it using ShowAtPosition
+	if popupMenu == nil {
+		menuItem1 := fyne.NewMenuItem("A", nil)
+		menuItem2 := fyne.NewMenuItem("B", nil)
+		menuItem3 := fyne.NewMenuItem("C", nil)
+		menu := fyne.NewMenu("File", menuItem1, menuItem2, menuItem3)
+		popupMenu = widget.NewPopUpMenu(menu, parentCanvas)
+	}
+	popupMenu.ShowAtPosition(parent.Position())
+	// popupMenu.Show()
+}

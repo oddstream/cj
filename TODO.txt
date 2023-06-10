@@ -1,11 +1,18 @@
 
-COM INC TODO
+NINCOMP TODO
+
+
+[ ] MarkText-style hamburger menu
+	set font
+	set light/dark theme
+	create backup
+
+[ ] different books in tabs? no, open different instances
 
 	see the following source for dialog.FileOpen
 	https://github.com/fyne-io/fyne/blob/v2.3.4/dialog/file.go
 	https://github.com/fyne-io/fyne/blob/master/dialog/file.go
 
-[ ] rname from goldnotebook to something else cominc incom incomp increcom nincomp(oop)
 [ ] func NewRichTextFromMarkdown(content string) *RichText
 	RichText can't be edited, but could be used as pop-up display of a Markdown note
 	so open a preview pane to the right of the MultiLineEntry pane
@@ -19,7 +26,7 @@ COM INC TODO
 [ ] Update list if note title edited (on save, implied reloading note)
 [ ] search is case sensitive
 [ ] copy .SelectedText() to find entry when Ctrl+F
-[ ] Backup to .zip file 'goldnotebook<date of backup>.zip'
+[ ] Backup to .zip file 'nincomp<date of backup>.zip'
 [ ] found list has two columns: date (ISO 8601) and text (first line)?
 [ ] follow url link in text
 	find all url in text
@@ -35,30 +42,20 @@ COM INC TODO
 	based on https://pkg.go.dev/fyne.io/x/fyne/widget#CompletionEntry
 [ ] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
 	my favorite color was red, now it's blue
-[ ]	List names of .goldnotebook subdirectories at start; choose one
+[ ]	List names of .nincomp subdirectories at start; choose one
 [ ] redo in Dart/Flutter
 [ ] redo in www.electronjs.org/ (like marktext, vscode)
 [ ] redo in Gambas (no date picker?)
 [ ] redo in Xojo
 [ ] redo in Tcl/Tk
+[ ] redon in Java/JavaFX (has a nice calendar/date picker), Grep4J library,
 
-```bash
-cd ~/tcltk/notes & tclsh notes.tcl notes.db
-
-go run -tags hints .go
-go run -tags mobile .go
-```
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
-COMMONPLACE BOOK
 
-Left pane is search entry and found list
-Right pane is toolbar (choose book? | new note) and multiline edit
-First line of note becomes note filename
-Notes need a hierarchy, so new note prompts for directory
-	no directory | chosen directory | new directory
-
+[x] com and inc should have different icons
+[x] rname from goldnotebook to something else cominc incom incomp increcom nincomp(oop)
 [x] search (for regexp) returns found word(s)?
 [x] cmd to search for all #hashtags, display popup list, click to search for that
 [x] split into inc and com

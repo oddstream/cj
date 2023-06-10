@@ -14,14 +14,15 @@ var bookIconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
 //go:embed icons/today-128.png
 var todayIconBytes []byte // https://www.iconsdb.com/white-icons/today-icon.html
 
+/*
 //go:embed "fonts/Go-Mono.ttf"
 var fontBytes []byte
 
-var resourceFontTtf = &fyne.StaticResource{
-	StaticName:    "Go-Mono.ttf",
-	StaticContent: fontBytes,
-}
-
+	var resourceFontTtf = &fyne.StaticResource{
+		StaticName:    "Go-Mono.ttf",
+		StaticContent: fontBytes,
+	}
+*/
 type NoteTheme struct {
 	FontSize float32
 	IconName string
@@ -59,13 +60,14 @@ func (nt *NoteTheme) Size(n fyne.ThemeSizeName) float32 {
 	// fmt.Println(theme.DefaultTheme().Size(n))
 	// }
 
-	// if n == theme.SizeNameInnerPadding {	// default InnerPadding is 8
-	// fmt.Println(theme.DefaultTheme().Size(n))
+	// if n == theme.SizeNameInnerPadding { // default InnerPadding is 8
+	// 	// fmt.Println(theme.DefaultTheme().Size(n))
+	// 	return theme.DefaultTheme().Size(n) + 4
 	// }
 
 	// if n == theme.SizeNameLineSpacing { // default LineSpacing is 4
-	// fmt.Println(theme.DefaultTheme().Size(n))
-	// return theme.DefaultTheme().Size(n) + 4
+	// 	// fmt.Println(theme.DefaultTheme().Size(n))
+	// 	return theme.DefaultTheme().Size(n) + 4
 	// }
 	return theme.DefaultTheme().Size(n)
 }

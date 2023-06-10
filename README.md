@@ -1,4 +1,6 @@
-# Nincomp - Commonplace and Incremental Notes - Work in Progress!
+# Nincomp - Commonplace and Incremental Notes
+
+## A fool takes notes
 
 There is [a lot of note-taking software out there](https://en.wikipedia.org/wiki/Comparison_of_note-taking_software), and the trouble with most of it is that it's too darn complicated. Which is a shame, because note-taking is something a lot of people do with computers.
 
@@ -14,7 +16,7 @@ So, take a breath and look at the landscape. There are, amongst other approaches
 
 The aim here is to make something that explicitly covers commonplace books and incremental notes, and enable a little of the functionality of zettelkasten using hashtags. After playing around with some designs for a while, I thought it might work to split commonplace books and incremental notes into two similar apps, so that they can be run side-by-side, so text can be cut and pasted between them.
 
-## com
+## A little app called `com`
 
 `com` is a simple app that allows you to write and retrieve commonplace book notes. You can have more than one commonplace book; the default one is called `Default`, but you can create others.
 
@@ -27,7 +29,7 @@ The user interface only has four elements:
 3. A list of note titles that have been found by typing into the entry box above it
 4. A toolbar, containing commands to: change the current book or create a new book; create a new note; search for hashtags in the book.
 
-## inc
+## A little app called `inc`
 
 `inc` is a simple app that allows you to write and retrieve incremental notes. You can have more than one notebook; the default one is called `Default`, but you can create others.
 
@@ -47,7 +49,7 @@ Thereafter, because all the notes are just text files in directory trees, they c
 
 ## Implementation
 
-`com` and `inc` are written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library. The search code is copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go). There's no indexing or anything fancy going on under the hood - what we have here is a text editor, grep and a simple user interface.
+`com` and `inc` are written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library. The search code is copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go). I could, maybe should, be doing this in Dart and Flutter, but I happened to be using Go at the time. There's no indexing or anything fancy going on under the hood - what we have here is a text editor, grep and a simple user interface.
 
 ## Local File Storage
 
@@ -76,11 +78,11 @@ No tricksy or closed file formats here, no sir.
 - Markdown support in `com` (fyne does have a markdown preview widget, but it's markdown support is, shall we say, basic). I *really* like WYSIWIG markdown editors like MarkText or Typora.
 - More support for hashtags (eg tap on a hashtag to find notes containing it, insert hashtag from dict)?
 - Support for creating backups, or git, or cloud (Fyne has some cloud support)
-- Many little quality-of-life tweaks like colors, keyboard shortcuts, and setting the font.
+- Many little quality-of-life tweaks like colors, keyboard shortcuts, and setting the font face and size.
 
 ## History
 
-In the early 1990s, I wrote something called [Idealist](https://en.wikipedia.org/wiki/IdeaList). That grew out of the idea of merging a database manager and a text editor, and morphed eventually into a package of components that were used to build applications in the museum, archive, and library sectors. I, like many others, just used it to take notes.
+In the early 1990s, I wrote something called [Idealist](https://en.wikipedia.org/wiki/IdeaList). That grew out of the idea of merging a database manager and a text editor, and morphed eventually into a package of components that were used to build applications in the museum, archive, and library sectors. 250,000-odd lines of C and Tcl, but I, like many others, just used it to take notes.
 
 Everytime I use a computer, I end up taking notes. Playing a game, developing a new app, doing finances, reading about the worldwide political horrorshows, building bicycles, planning a vegetable garden, following a tv series, reading a book, ... everything seems to generate notes.
 

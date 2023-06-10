@@ -6,11 +6,13 @@ There are simple exceptions like [Google Keep](https://keep.google.com/#home) an
 
 ## Types of note taking
 
+So, take a breath and look at the landscape. There are, amongst other approaches:
+
 1. [Commonplace books](https://en.wikipedia.org/wiki/Commonplace_book) Leonardo da Vinci kept all of his notes in one big book. If he liked something he put it down. This is known as a commonplace book, and it is about how detailed your note-taking system should be unless you plan on thinking more elaborately than Leonardo da Vinci.
 2. [Zettelkasten](https://en.wikipedia.org/wiki/Zettelkasten) or a card file: small items of information stored on paper slips or cards that may be linked to each other through subject headings or other metadata such as numbers and tags.
 3. [Incremental notes](https://thesephist.com/posts/inc/) are like a diary, but for notes: start a new page every day and fill it with what you're doing, not doing, or reading, or whatever.
 
-The aim here is to make something that explicitly covers commonplace books and incremental notes, and enable the functionality of zettelkasten using hashtags. After playing around with some designs for a while, I thought it might work to split commonplace books and incremental notes into two similar apps, so that they can be run side-by-side, so text can be cut and pasted between them.
+The aim here is to make something that explicitly covers commonplace books and incremental notes, and enable a little of the functionality of zettelkasten using hashtags. After playing around with some designs for a while, I thought it might work to split commonplace books and incremental notes into two similar apps, so that they can be run side-by-side, so text can be cut and pasted between them.
 
 ## com
 
@@ -23,7 +25,7 @@ The user interface only has four elements:
 1. The text of the current note
 2. An entry box where you can type for a word that exists in a note (in the current book)
 3. A list of note titles that have been found by typing into the entry box above it
-4. A toolbar, containing commands to: change the current book or create a new book; create a new note; search for hastags in the book.
+4. A toolbar, containing commands to: change the current book or create a new book; create a new note; search for hashtags in the book.
 
 ## inc
 
@@ -33,7 +35,7 @@ The user interface only has four elements:
 
 `inc` generates a new note for you everyday (but you can still edit old notes, or create notes in the future). There is no explicit 'create note' feature, everyday has it's own note.
 
-I'm toying with the idea that notes from days before today cannot be edited. Think of it like this: last October, your favorite color was red, so you made a note of it. Now, your favorite color is blue. So, should you go back and edit the note from October, removing your choice from history, or just make a new note?
+I toyed with the idea that notes from days before today cannot be edited. Think of it like this: last October, your favorite color was red, so you made a note of it. Now, your favorite color is blue. So, should you go back and edit the note from October, removing your choice from history, or just make a new note? I think the user can just resolve not to edit old notes, rather than have the app decide that for them.
 
 The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) and from using [rednotebook](https://rednotebook.app) for a while.
 
@@ -41,9 +43,7 @@ The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) an
 
 The general idea is have an instance of `inc` open, where you put notes and bits of text as they come up during the day. (You can have more than one instance of `inc` open, one for each book, if you use multiple books.) Then, have one or more instances of `com` open, and copy-and-paste text from `inc` to `com` as that information endures or needs categorization.
 
-## markdown
-
-## hashtags
+Thereafter, because all the notes are just text files in directory trees, they can be manipulated, exported, reformatted by worthier and more appropriate tools.
 
 ## Implementation
 
@@ -66,13 +66,14 @@ cd ~
 zip -r $filename .nincomp
 ```
 
+No tricksy or closed file formats here, no sir.
+
 ## TODO
 
 - Better text editor (including spellchecking, found word highlighting, follow url, more visible caret, more keyboard shortcuts)
 - The current search is very efficient, but case sensitive
 - Support for moving text from `inc` to `com`, to facilitate short term to long term note workflow; maybe right-click popup 'copy selected text to commonplace book' ...
-- The 'choose a hashtag' dialog uses a select widget, which should really be a list widget
-- Markdown support in `com`
+- Markdown support in `com` (fyne does have a markdown preview widget, but it's markdown support is, shall we say, basic). I *really* like WYSIWIG markdown editors like MarkText or Typora.
 - More support for hashtags (eg insert hashtag from dict)?
 - Support for creating backups, or git, or cloud (Fyne has some cloud support)
 - Many little quality-of-life tweaks

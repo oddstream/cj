@@ -93,9 +93,8 @@ func (u *ui) find(query string) {
 	if query == "" {
 		return
 	}
-	// query = strings.ToLower(query)
 
-	theUI.found = []*comNote{}
+	u.found = []*comNote{}
 
 	opts := &search.SearchOptions{
 		Kind:   search.LITERAL,
@@ -111,10 +110,61 @@ func (u *ui) find(query string) {
 	}
 }
 
-func listSelected(id widget.ListItemID) {
-	// log.Printf("list item %d selected", id)
-	theUI.saveDirtyNote()
-	theUI.setCurrent(theUI.found[id])
+func (u *ui) findAll() {
+	u.found = []*comNote{}
+
+	bookDir := path.Join(theUserHomeDir, theDataDir, "com", theBookDir)
+	files, err := os.ReadDir(bookDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		// log.Println(path.Join(bookDir, file.Name()))
+		n := &comNote{}
+		n.Load(path.Join(bookDir, file.Name()))
+		if len(n.Text) == 0 {
+			println("empty note!")
+		} else {
+			n.title = util.FirstLine(n.Text)
+			// println(n.title)
+			// length := len(u.found)
+			u.found = append(u.found, n)
+			// if len(u.found) != length+1 {
+			// 	println("not added was", length, "now", len(u.found), "!")
+			// }
+			// if !util.Contains(u.found, n) {
+			// 	println("found does not contain note")
+			// }
+		}
+	}
+	// filepath.Walk(path.Join(theUserHomeDir, theDataDir, "com", theBookDir),
+	// 	func(path string, info os.FileInfo, err error) error {
+	// 		if err != nil {
+	// 			log.Fatalf("filePathWalk error %s\n", err)
+	// 			return err
+	// 		}
+	// 		if !info.IsDir() {
+	// 			log.Println(path)
+	// 			n := &comNote{}
+	// 			n.Load(path)
+	// 			n.title = util.FirstLine(n.Text)
+	// 			u.found = append(u.found, n)
+	// 		}
+	// 		return nil
+	// 	})
+	u.searchEntry.Text = ""
+	u.searchEntry.Refresh()
+
+	u.foundList.UnselectAll()
+	u.foundList.Refresh()
+
+	// for i, n := range u.found {
+	// 	println(i, n.title)
+	// }
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
@@ -126,14 +176,17 @@ func buildUI(u *ui) fyne.CanvasObject {
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			theUI.promptUserForBookDir()
 		}),
-		widget.NewToolbarAction(theme.DocumentIcon(), func() {
+		widget.NewToolbarAction(theme.DocumentCreateIcon(), func() {
 			theUI.saveDirtyNote()
+			theUI.found = []*comNote{}
+			theUI.foundList.Refresh()
 			theUI.setCurrent(&comNote{})
 		}),
 		widget.NewToolbarAction(theme.SearchIcon(), func() {
 			theUI.searchForHashTags()
 		}),
 	)
+
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.OnChanged = func(str string) {
 		u.found = []*comNote{}
@@ -144,10 +197,8 @@ func buildUI(u *ui) fyne.CanvasObject {
 		u.foundList.Refresh()
 	}
 	u.searchEntry.PlaceHolder = "Search"
-	// u.searchEntry.OnSubmitted = func(str string) {
-	// 	u.find(str)
-	// }
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
+
 	u.foundList = widget.NewList(
 		func() int {
 			return len(theUI.found)
@@ -156,11 +207,14 @@ func buildUI(u *ui) fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			// println("update widget.ListItemID", id)
+			// println("update widget.ListItemID", id, theUI.found[id].title)
 			obj.(*widget.Label).SetText(theUI.found[id].title)
 		},
 	)
-	u.foundList.OnSelected = listSelected
+	u.foundList.OnSelected = func(id widget.ListItemID) {
+		theUI.saveDirtyNote()
+		theUI.setCurrent(theUI.found[id])
+	}
 
 	side := container.New(layout.NewBorderLayout(u.searchEntry, nil, nil, nil), u.searchEntry, u.foundList)
 
@@ -280,6 +334,10 @@ func main() {
 	theUI = &ui{w: a.NewWindow(appTitle()), current: &comNote{}} // start with an empty note
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
+	ctrlF5 := &desktop.CustomShortcut{KeyName: fyne.KeyF5, Modifier: fyne.KeyModifierControl}
+	theUI.w.Canvas().AddShortcut(ctrlF5, func(shortcut fyne.Shortcut) {
+		theUI.findAll()
+	})
 	ctrlM := &desktop.CustomShortcut{KeyName: fyne.KeyM, Modifier: fyne.KeyModifierControl}
 	theUI.w.Canvas().AddShortcut(ctrlM, func(shortcut fyne.Shortcut) {
 		fynex.ShowMarkdownPopup(theUI.w.Canvas(), theUI.current.Text)

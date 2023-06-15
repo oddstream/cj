@@ -1,13 +1,41 @@
 
 NINCOMP TODO
 
+[ ] needs to do better than vscode (grep + nano)
+
+[ ] shortcuts
+	see "Adding shortcuts to an Entry" at https://developer.fyne.io/explore/shortcuts
+	to add shorts to note multilinentry, for save, find all etc
+	how to do Ctrl+Left/Right &c? no way to set Entry selection?
+	see suggested enhancement https://github.com/fyne-io/fyne/issues/2462
+	can get CursorRow, CursorColumn int
+	Entry.InsertText() https://github.com/fyne-io/fyne/issues/3445
+
+[ ] steal ideas from https://www.tagspaces.org
+[ ] findAll is finding them all but not displaying properly
+	the last file found is missing
+	oh, now it's working?
+	...only when main window/list is resized
+	...suggesting it's a Fyne bug
+[ ] com: image files as notes, preview, note with same name as image, contain description, source, hashtags?
+	cat_washing.gif
+	cat_washing.txt
+[ ] com: color-codes notes? aren't Books and #hashtags enough?
+	scan for #blue #red #green tags and change theme when loading
+[ ] detect if note has changed on disk
+[ ] com: find a note, create a new note, then click on found note: nothing happens, stuck on new note
+	implies create new note should zap the found list?
+[ ] com find all notes
+[ ] DocumentCreateIcon
+[ ] more visible caret in entry widget
+[ ] Narrow, Widen, Exclude found list?
+[ ] Find the Entry source, read it, roll your own?
 
 [ ] MarkText-style hamburger menu
 	set font
 	set light/dark theme
 	create backup
 
-[ ] different books in tabs? no, open different instances
 
 	see the following source for dialog.FileOpen
 	https://github.com/fyne-io/fyne/blob/v2.3.4/dialog/file.go
@@ -19,7 +47,7 @@ NINCOMP TODO
 [ ] Entry.SetMinRowsVisible
 [ ] could AddShortcut to widget.Entry canvas
 [ ] .txt/.md switch?
-[ ] more support for #tags? insert from dict?
+[ ] more support for #tags? insert from dict? search for tag?
 [ ] fyne.AppMetaData
 [ ] app desktop icon
 	create a .desktop file in /usr/share/applications
@@ -40,20 +68,33 @@ NINCOMP TODO
 
 [ ] autocomplete https://addons.fyne.io/addons/io.fyne-x.completion-entry.html
 	based on https://pkg.go.dev/fyne.io/x/fyne/widget#CompletionEntry
-[ ] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
-	my favorite color was red, now it's blue
+
 [ ]	List names of .nincomp subdirectories at start; choose one
+
+[ ] redo as vscode extension(s)?
+	calendar https://marketplace.visualstudio.com/items?itemName=miyamotoh.vscal2
+[ ] redo in Go/Gio UI https://gioui.org/doc/learn
+	the text edit supports Ctrl+Left/Right, fo a start
+	have to create your own calendar
 [ ] redo in Dart/Flutter
-[ ] redo in www.electronjs.org/ (like marktext, vscode)
-[ ] redo in Gambas (no date picker?)
-[ ] redo in Xojo
-[ ] redo in Tcl/Tk
-[ ] redon in Java/JavaFX (has a nice calendar/date picker), Grep4J library,
+[ ] redo in Tcl/Tk (roll your own date picker, examples in tkinter)
+[ ] redo in Java/JavaFX (has a nice calendar/date picker), Grep4J library,
+	use the JavaFX Scene Builder (not JavaFX Script, which is discontinued)
+	Maven, Gradle, OpenJDK, JavaFX versions ...
+
+[x] redo in www.electronjs.org/ (like marktext, vscode), but then it would be huge.
+[x] redo in Gambas (no date picker?)
+[x] redo in https://xojo.com $399/year to write BASIC apps? No thank you.
+[x] redo in Ruby/Shoes (learn Ruby and roll your own date picker) (editor might be shit, again)
+[x] redo on Vala/GTK, but then it would be Gnome only, no Windows, Mac, mobile.
 
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
 
+[x] different books in tabs? no, open different instances
+[x] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
+	my favorite color was red, now it's blue
 [x] com and inc should have different icons
 [x] rname from goldnotebook to something else cominc incom incomp increcom nincomp(oop)
 [x] search (for regexp) returns found word(s)?

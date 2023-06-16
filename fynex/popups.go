@@ -76,6 +76,45 @@ func ShowListEntryPopUp(canvas fyne.Canvas, title string, strs []string, okCallb
 	pu.Show()
 }
 
+func ShowListEntryPopUp2(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
+	var pu *widget.PopUp
+	hdr := widget.NewLabel(title)
+	var currSel string
+	lbox := widget.NewList(
+		func() int {
+			return len(strs)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(id widget.ListItemID, obj fyne.CanvasObject) {
+			obj.(*widget.Label).SetText(strs[id])
+		},
+	)
+	lbox.OnSelected = func(id int) {
+		currSel = strs[id]
+	}
+	ent := widget.NewEntry()
+	ent.PlaceHolder = "New"
+	ok := widget.NewButton("OK", func() {
+		txt := ent.Text
+		if txt == "" {
+			txt = currSel
+		}
+		okCallback(txt)
+		pu.Hide()
+	})
+	cancel := widget.NewButton("Cancel", func() {
+		pu.Hide()
+	})
+	buttons := container.New(layout.NewGridLayout(2), ok, cancel)
+	bottom := container.New(layout.NewVBoxLayout(), ent, buttons)
+	content := container.New(layout.NewBorderLayout(hdr, bottom, nil, nil), hdr, lbox, bottom)
+	pu = widget.NewModalPopUp(content, canvas)
+	pu.Resize(fyne.NewSize(200, 320))
+	pu.Show()
+}
+
 func ShowMarkdownPopup(parentCanvas fyne.Canvas, text string) {
 	mkdn := widget.NewRichTextFromMarkdown(text)
 	content := container.New(layout.NewBorderLayout(nil, nil, nil, nil), mkdn)

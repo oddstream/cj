@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	appName    = "Nincomp"
+	appName    = "inc"
 	appVersion = "0.1"
 )
 
@@ -241,19 +241,20 @@ func (u *ui) promptUserForBookDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	fynex.ShowListEntryPopUp(u.w.Canvas(), "Select Book", bookDirs, func(str string) {
+	fynex.ShowListEntryPopUp2(u.w.Canvas(), "Select Book", bookDirs, func(str string) {
 		if str == "" {
 			return
 		}
-		u.saveDirtyNote()
-		u.found = []*incNote{}
-		u.foundList.Refresh()
 		// if debugMode {
 		// 	log.Println("setting theBookDir to", theBookDir)
 		// }
-		theBookDir = str
-		u.setCurrent(&incNote{})
-		u.w.SetTitle(appTitle())
+		if str != theBookDir {
+			theBookDir = str
+			calendarTapped(time.Now())
+			u.found = []*incNote{}
+			u.foundList.Refresh()
+			u.w.SetTitle(appTitle())
+		}
 	})
 }
 

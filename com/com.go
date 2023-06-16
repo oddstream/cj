@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	appName    = "Nincomp"
+	appName    = "com"
 	appVersion = "0.1"
 )
 
@@ -44,16 +44,33 @@ type ui struct {
 type comNote struct {
 	note.Note
 	title string // the title of this note WHEN LOADED (to detect filename changes)
+	ext   string // the extension of this note WHEN LOADED (usually .txt or .md)
 }
 
-func makeFnameFromTitle(title string) string {
-	title = util.Sanitize(title)
+func load(fname string) *comNote {
+	cn := &comNote{}
+	cn.Load(fname)
+	cn.title = util.FirstLine(cn.Text)
+	cn.ext = path.Ext(fname) // DOES include leading .
+	return cn
+}
+
+func (cn *comNote) save() {
+	title := util.Sanitize(cn.title)
 	if title == "" {
 		title = "untitled"
 	}
-	fname := path.Join(theUserHomeDir, theDataDir, "com", theBookDir, title+".txt")
-	// println("makeFnameFromTitle title:", title, "fname:", fname)
-	return fname
+	fname := path.Join(theUserHomeDir, theDataDir, "com", theBookDir, title+cn.ext)
+	cn.Save(fname)
+}
+
+func (cn *comNote) remove() {
+	title := util.Sanitize(cn.title)
+	if title == "" {
+		title = "untitled"
+	}
+	fname := path.Join(theUserHomeDir, theDataDir, "com", theBookDir, title+cn.ext)
+	cn.Remove(fname)
 }
 
 var (
@@ -73,12 +90,13 @@ func (u *ui) saveDirtyNote() {
 	if newText != u.current.Text {
 		oldTitle := u.current.title
 		newTitle := util.FirstLine(newText)
+		if newTitle != oldTitle {
+			u.current.remove()
+		}
 		u.current.Text = newText
 		u.current.title = newTitle
-		u.current.Save(makeFnameFromTitle(newTitle))
-		if newTitle != oldTitle {
-			u.current.Remove(makeFnameFromTitle(oldTitle))
-		}
+		// keep the same .ext
+		u.current.save()
 		u.foundList.Refresh()
 	}
 }
@@ -89,6 +107,7 @@ func (u *ui) setCurrent(n *comNote) {
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 }
 
+// find takes the query, does a search, and fills the .found slice of comNotes
 func (u *ui) find(query string) {
 	if query == "" {
 		return
@@ -103,13 +122,12 @@ func (u *ui) find(query string) {
 	}
 	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "com", theBookDir)}, opts)
 	for _, fname := range results {
-		n := &comNote{}
-		n.Load(fname)
-		n.title = util.FirstLine(n.Text)
+		n := load(fname)
 		u.found = append(u.found, n)
 	}
 }
 
+// findAll fills the .found slice with all the notes in the current book
 func (u *ui) findAll() {
 	u.found = []*comNote{}
 
@@ -124,38 +142,9 @@ func (u *ui) findAll() {
 			continue
 		}
 		// log.Println(path.Join(bookDir, file.Name()))
-		n := &comNote{}
-		n.Load(path.Join(bookDir, file.Name()))
-		if len(n.Text) == 0 {
-			println("empty note!")
-		} else {
-			n.title = util.FirstLine(n.Text)
-			// println(n.title)
-			// length := len(u.found)
-			u.found = append(u.found, n)
-			// if len(u.found) != length+1 {
-			// 	println("not added was", length, "now", len(u.found), "!")
-			// }
-			// if !util.Contains(u.found, n) {
-			// 	println("found does not contain note")
-			// }
-		}
+		n := load(path.Join(bookDir, file.Name()))
+		u.found = append(u.found, n)
 	}
-	// filepath.Walk(path.Join(theUserHomeDir, theDataDir, "com", theBookDir),
-	// 	func(path string, info os.FileInfo, err error) error {
-	// 		if err != nil {
-	// 			log.Fatalf("filePathWalk error %s\n", err)
-	// 			return err
-	// 		}
-	// 		if !info.IsDir() {
-	// 			log.Println(path)
-	// 			n := &comNote{}
-	// 			n.Load(path)
-	// 			n.title = util.FirstLine(n.Text)
-	// 			u.found = append(u.found, n)
-	// 		}
-	// 		return nil
-	// 	})
 	u.searchEntry.Text = ""
 	u.searchEntry.Refresh()
 
@@ -258,6 +247,8 @@ func (u *ui) promptUserForBookDir() {
 			return
 		}
 		u.saveDirtyNote()
+		u.searchEntry.Text = ""
+		u.searchEntry.Refresh()
 		u.found = []*comNote{}
 		u.foundList.Refresh()
 		// if debugMode {

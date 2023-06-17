@@ -2,6 +2,7 @@
 NINCOMP TODO
 
 [ ] needs to do better than vscode (grep + nano)
+[ ] retire com, use vscode or Marktext instead
 
 [ ] shortcuts
 	see "Adding shortcuts to an Entry" at https://developer.fyne.io/explore/shortcuts
@@ -23,8 +24,6 @@ NINCOMP TODO
 [ ] com: color-codes notes? aren't Books and #hashtags enough?
 	scan for #blue #red #green tags and change theme when loading
 [ ] detect if note has changed on disk
-[ ] com: find a note, create a new note, then click on found note: nothing happens, stuck on new note
-	implies create new note should zap the found list?
 [ ] com find all notes
 [ ] DocumentCreateIcon
 [ ] more visible caret in entry widget
@@ -71,6 +70,8 @@ NINCOMP TODO
 
 [ ]	List names of .nincomp subdirectories at start; choose one
 
+[ ] redo in Haxe/HaxeUI
+	has calendars
 [ ] redo as vscode extension(s)?
 	calendar https://marketplace.visualstudio.com/items?itemName=miyamotoh.vscal2
 [ ] redo in Go/Gio UI https://gioui.org/doc/learn
@@ -91,7 +92,8 @@ NINCOMP TODO
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
-
+[x] com: find a note, create a new note, then click on found note: nothing happens, stuck on new note
+	implies create new note should zap the found list?
 [x] different books in tabs? no, open different instances
 [x] append only notes app (see incremental notes from https://thesephist.com/posts/inc/)
 	my favorite color was red, now it's blue

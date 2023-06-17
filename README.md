@@ -31,6 +31,8 @@ The user interface only has four elements:
 3. A list of note titles that have been found by typing into the entry box above it
 4. A toolbar, containing commands to: change the current book or create a new book; create a new note; search for hashtags in the book.
 
+**STOP PRESS** I'm abandoning `com`, because it's worse - much worse - than anything you can do with a decent markdown editor like Typora or MarkText.
+
 ## A little app called `inc`
 
 `inc` is a simple app that allows you to write and retrieve incremental notes. You can have more than one notebook; the default one is called `Default`, but you can create others.

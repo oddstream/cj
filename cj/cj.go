@@ -19,20 +19,20 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"oddstream.nincomp/fynex"
-	"oddstream.nincomp/note"
-	"oddstream.nincomp/search"
-	"oddstream.nincomp/util"
+	"oddstream.cj/fynex"
+	"oddstream.cj/note"
+	"oddstream.cj/search"
+	"oddstream.cj/util"
 )
 
 const (
-	appName    = "inc"
+	appName    = "cj"
 	appVersion = "0.1"
 )
 
 type ui struct {
-	current *incNote
-	found   []*incNote
+	current *cjNote
+	found   []*cjNote
 
 	w           fyne.Window
 	toolbar     *widget.Toolbar
@@ -42,20 +42,20 @@ type ui struct {
 	noteEntry   *widget.Entry
 }
 
-type incNote struct {
+type cjNote struct {
 	note.Note
 	date time.Time
 }
 
-func (n *incNote) fname() string {
-	return path.Join(theUserHomeDir, theDataDir, "inc", theBookDir,
+func (n *cjNote) fname() string {
+	return path.Join(theUserHomeDir, theDataDir, theJournalDir,
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()),
 		fmt.Sprintf("%02d.txt", n.date.Day()))
 }
 
-func makeAndLoadNote(t time.Time) *incNote {
-	n := &incNote{date: t}
+func makeAndLoadNote(t time.Time) *cjNote {
+	n := &cjNote{date: t}
 	fname := n.fname()
 	n.Load(fname)
 	return n
@@ -64,20 +64,20 @@ func makeAndLoadNote(t time.Time) *incNote {
 var (
 	theUI          *ui
 	theUserHomeDir string // eg /home/gilbert
-	theDataDir     string // eg .nincomp
-	theBookDir     string // eg Default
+	theDataDir     string // eg .cj
+	theJournalDir  string // eg Default
 	debugMode      bool
 )
 
 func appTitle() string {
-	return "Incremental Notes - " + theBookDir
+	return "Commonplace Journal - " + theJournalDir
 }
 
 func parseDateFromFname(fname string) time.Time {
 	var t = time.Time{}
 	lst := strings.Split(fname, string(os.PathSeparator))
 	for i := 0; i < len(lst)-3; i++ {
-		if lst[i] == theBookDir {
+		if lst[i] == theJournalDir {
 			if y, err := strconv.Atoi(lst[i+1]); err == nil {
 				if m, err := strconv.Atoi(lst[i+2]); err == nil {
 					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
@@ -101,7 +101,7 @@ func (u *ui) saveDirtyNote() {
 	}
 }
 
-func (u *ui) setCurrent(n *incNote) {
+func (u *ui) setCurrent(n *cjNote) {
 	theUI.current = n
 	theUI.noteEntry.SetText(theUI.current.Text)
 	theUI.calendar.Objects[0] = fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
@@ -125,14 +125,14 @@ func (u *ui) find(query string) {
 	}
 	// query = strings.ToLower(query)
 
-	u.found = []*incNote{}
+	u.found = []*cjNote{}
 
 	opts := &search.SearchOptions{
 		Kind:   search.LITERAL,
 		Regex:  nil,
 		Finder: search.MakeStringFinder([]byte(query)),
 	}
-	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "inc", theBookDir)}, opts)
+	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, theJournalDir)}, opts)
 	for _, fname := range results {
 		n := makeAndLoadNote(parseDateFromFname(fname))
 		u.found = append(theUI.found, n)
@@ -173,7 +173,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.PlaceHolder = "Search"
 	u.searchEntry.OnChanged = func(str string) {
-		u.found = []*incNote{}
+		u.found = []*cjNote{}
 		if len(str) > 1 {
 			u.find(str)
 		}
@@ -217,11 +217,11 @@ func buildUI(u *ui) fyne.CanvasObject {
 // }
 
 func (u *ui) promptUserForBookDir() {
-	var bookDirs []string
+	var journalDirs []string
 
 	// get a list of directories
 
-	homePath := path.Join(theUserHomeDir, theDataDir, "inc")
+	homePath := path.Join(theUserHomeDir, theDataDir)
 	f, err := os.Open(homePath)
 	if err != nil {
 		log.Fatalf("couldn't open path %s: %s\n", homePath, err)
@@ -230,9 +230,9 @@ func (u *ui) promptUserForBookDir() {
 	if err != nil {
 		log.Fatalf("couldn't read dir names for path %s: %s\n", homePath, err)
 	}
-	bookDirs = append(bookDirs, dirNames...)
-	if len(bookDirs) == 1 {
-		theBookDir = bookDirs[0]
+	journalDirs = append(journalDirs, dirNames...)
+	if len(journalDirs) == 1 {
+		theJournalDir = journalDirs[0]
 		return
 	}
 
@@ -241,17 +241,17 @@ func (u *ui) promptUserForBookDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	fynex.ShowListEntryPopUp2(u.w.Canvas(), "Select Book", bookDirs, func(str string) {
+	fynex.ShowListEntryPopUp2(u.w.Canvas(), "Select Book", journalDirs, func(str string) {
 		if str == "" {
 			return
 		}
 		// if debugMode {
 		// 	log.Println("setting theBookDir to", theBookDir)
 		// }
-		if str != theBookDir {
-			theBookDir = str
+		if str != theJournalDir {
+			theJournalDir = str
 			calendarTapped(time.Now())
-			u.found = []*incNote{}
+			u.found = []*cjNote{}
 			u.foundList.Refresh()
 			u.w.SetTitle(appTitle())
 		}
@@ -277,7 +277,7 @@ func (u *ui) searchForHashTags() {
 		Regex:  regexp.MustCompile("#[[:alnum:]]+"),
 		Finder: nil,
 	}
-	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, "inc", theBookDir)}, opts)
+	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, theJournalDir)}, opts)
 	if len(results) > 0 {
 		fynex.ShowListPopUp2(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
 			u.injectSearch(str)
@@ -296,8 +296,8 @@ func main() {
 	var startSearch string // so com and inc have same command line flags
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
-	flag.StringVar(&theDataDir, "data", ".nincomp", "name of the data directory")
-	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
+	flag.StringVar(&theDataDir, "data", ".cj", "name of the data directory")
+	flag.StringVar(&theJournalDir, "book", "Default", "name of the book to open")
 	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()
 	if *reportVersion {
@@ -311,7 +311,7 @@ func main() {
 		} else {
 			log.Printf("str: %T, %v\n", str, str)
 		}
-		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theBookDir)
+		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theJournalDir)
 	}
 
 	a := app.NewWithID("oddstream.incrementalnotebook")

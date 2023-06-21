@@ -17,10 +17,10 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"oddstream.nincomp/fynex"
-	"oddstream.nincomp/note"
-	"oddstream.nincomp/search"
-	"oddstream.nincomp/util"
+	"oddstream.cj/fynex"
+	"oddstream.cj/note"
+	"oddstream.cj/search"
+	"oddstream.cj/util"
 )
 
 const (
@@ -298,7 +298,7 @@ func main() {
 	var startSearch string
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
-	flag.StringVar(&theDataDir, "data", ".nincomp", "name of the data directory")
+	flag.StringVar(&theDataDir, "data", ".cj", "name of the data directory")
 	flag.StringVar(&theBookDir, "book", "Default", "name of the book to open")
 	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()

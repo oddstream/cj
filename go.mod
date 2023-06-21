@@ -1,4 +1,4 @@
-module oddstream.nincomp
+module oddstream.cj
 
 go 1.19
 

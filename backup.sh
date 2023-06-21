@@ -1,4 +1,4 @@
 today=`date +%Y-%m-%d`
-filename="nincomp$today.zip"
+filename="cj$today.zip"
 cd ~
-zip -r $filename .nincomp
+zip -r $filename .cj

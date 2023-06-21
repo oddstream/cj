@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"sync"
 
-	"oddstream.nincomp/util"
+	"oddstream.cj/util"
 )
 
 const (

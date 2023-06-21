@@ -1,8 +1,8 @@
 
-NINCOMP TODO
+COMMONPLACE JOURNAL TODO
 
-[ ] needs to do better than vscode (grep + nano)
-[ ] retire com, use vscode or Marktext instead
+[ ] new name - cj - commonplace journal?
+[ ] retire com, use vscode | Typora | Marktext instead
 
 [ ] shortcuts
 	see "Adding shortcuts to an Entry" at https://developer.fyne.io/explore/shortcuts
@@ -11,6 +11,13 @@ NINCOMP TODO
 	see suggested enhancement https://github.com/fyne-io/fyne/issues/2462
 	can get CursorRow, CursorColumn int
 	Entry.InsertText() https://github.com/fyne-io/fyne/issues/3445
+
+[ ] find
+	dynamic find (type in the entry, list is dynamically displayed)
+	find hashtags (find all hashtags using regexp, display in list)
+	find all
+	find/widen/narrow/exclude
+		needs seperate modal popup
 
 [ ] steal ideas from https://www.tagspaces.org
 [ ] findAll is finding them all but not displaying properly
@@ -27,14 +34,12 @@ NINCOMP TODO
 [ ] com find all notes
 [ ] DocumentCreateIcon
 [ ] more visible caret in entry widget
-[ ] Narrow, Widen, Exclude found list?
 [ ] Find the Entry source, read it, roll your own?
 
 [ ] MarkText-style hamburger menu
 	set font
 	set light/dark theme
 	create backup
-
 
 	see the following source for dialog.FileOpen
 	https://github.com/fyne-io/fyne/blob/v2.3.4/dialog/file.go
@@ -79,6 +84,8 @@ NINCOMP TODO
 	have to create your own calendar
 [ ] redo in Dart/Flutter
 [ ] redo in Tcl/Tk (roll your own date picker, examples in tkinter)
+	https://core.tcl-lang.org/tklib/doc/trunk/embedded/md/tklib/files/modules/widget/widget_calendar.md
+	https://github.com/tcltk/tklib/blob/master/modules/widget/calendar.tcl
 [ ] redo in Java/JavaFX (has a nice calendar/date picker), Grep4J library,
 	use the JavaFX Scene Builder (not JavaFX Script, which is discontinued)
 	Maven, Gradle, OpenJDK, JavaFX versions ...

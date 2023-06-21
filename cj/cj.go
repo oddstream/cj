@@ -293,12 +293,14 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	var startSearch string // so com and inc have same command line flags
+	var fontSize, windowWidth, windowHeight int
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".cj", "name of the data directory")
 	flag.StringVar(&theJournalDir, "Journal", "Default", "name of the journal to open")
-	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
+	flag.IntVar(&fontSize, "fontSize", 15, "font size")
+	flag.IntVar(&windowWidth, "width", 1024, "width of the window")
+	flag.IntVar(&windowHeight, "height", 640, "height of the window")
 	flag.Parse()
 	if *reportVersion {
 		fmt.Println(appName, appVersion)
@@ -316,7 +318,7 @@ func main() {
 
 	a := app.NewWithID("oddstream.incrementaljournal")
 
-	th := &fynex.NoteTheme{FontSize: 15.0, IconName: "today"}
+	th := &fynex.NoteTheme{FontSize: float32(fontSize), IconName: "today"}
 	a.Settings().SetTheme(th)
 	a.SetIcon(th.BookIcon())
 
@@ -332,14 +334,7 @@ func main() {
 	theUI.w.Canvas().Focus(theUI.noteEntry)
 	theUI.noteEntry.SetText(theUI.current.Text)
 
-	// if startSearch != "" {
-	// 	if !strings.HasPrefix(startSearch, "#") {
-	// 		startSearch = "#" + startSearch
-	// 	}
-	// 	theUI.injectSearch(startSearch)
-	// }
-
-	theUI.w.Resize(fyne.NewSize(1024, 640))
+	theUI.w.Resize(fyne.NewSize(float32(windowWidth), float32(windowHeight)))
 	theUI.w.CenterOnScreen()
 	theUI.w.ShowAndRun()
 

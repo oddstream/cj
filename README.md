@@ -44,7 +44,7 @@ Thereafter, because all the notes are just text files in directory trees, they c
 
 `cj` is written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library. The search code is copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go). I could - maybe should - be doing this in Dart and Flutter, but I happened to be using Go at the time. There's no indexing or anything fancy going on under the hood - what we have here is a text editor, grep and a simple user interface.
 
-## Local File Storage
+## Local file storage
 
 All the notes are stored as text files in a directory tree. The root is `.cj`.
 
@@ -66,6 +66,12 @@ No tricksy or closed file formats here, no sir.
 `-data <name of data directory>` Defaults to `-data=.cj`.
 
 `-journal <name of journal to open initially>` Defaults to `-journal=Default`.
+
+`-fontSize <size of font>` Defaults to `-fontSize=15`
+
+`-width <width of window in pixels>` Defaults to `-width=1024`
+
+`-height <height of window in pixels>` Defaults to `-height=640`
 
 ## TODO
 

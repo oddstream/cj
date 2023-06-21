@@ -149,7 +149,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
-			u.promptUserForBookDir()
+			u.promptUserForJournalDir()
 		}),
 		widget.NewToolbarAction(theme.SearchIcon(), func() {
 			theUI.searchForHashTags()
@@ -216,7 +216,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 // 	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
 // }
 
-func (u *ui) promptUserForBookDir() {
+func (u *ui) promptUserForJournalDir() {
 	var journalDirs []string
 
 	// get a list of directories
@@ -241,12 +241,12 @@ func (u *ui) promptUserForBookDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	fynex.ShowListEntryPopUp2(u.w.Canvas(), "Select Book", journalDirs, func(str string) {
+	fynex.ShowListEntryPopUp2(u.w.Canvas(), "Select Journal", journalDirs, func(str string) {
 		if str == "" {
 			return
 		}
 		// if debugMode {
-		// 	log.Println("setting theBookDir to", theBookDir)
+		// 	log.Println("setting theJournalDir to", theJournalDir)
 		// }
 		if str != theJournalDir {
 			theJournalDir = str
@@ -297,7 +297,7 @@ func main() {
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".cj", "name of the data directory")
-	flag.StringVar(&theJournalDir, "book", "Default", "name of the book to open")
+	flag.StringVar(&theJournalDir, "Journal", "Default", "name of the journal to open")
 	flag.StringVar(&startSearch, "search", "", "look for this hashtag when starting")
 	flag.Parse()
 	if *reportVersion {
@@ -311,10 +311,10 @@ func main() {
 		} else {
 			log.Printf("str: %T, %v\n", str, str)
 		}
-		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\nbook:", theJournalDir)
+		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\njournal:", theJournalDir)
 	}
 
-	a := app.NewWithID("oddstream.incrementalnotebook")
+	a := app.NewWithID("oddstream.incrementaljournal")
 
 	th := &fynex.NoteTheme{FontSize: 15.0, IconName: "today"}
 	a.Settings().SetTheme(th)

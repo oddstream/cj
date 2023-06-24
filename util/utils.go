@@ -50,7 +50,7 @@ func RemoveDuplicates[T string | int](sliceList []T) []T {
 */
 
 func RemoveDuplicateStrings(s []string) []string {
-	if len(s) < 1 {
+	if len(s) < 2 {
 		return s
 	}
 
@@ -73,4 +73,34 @@ func Contains[T comparable](elems []T, v T) bool {
 		}
 	}
 	return false
+}
+
+func Union[T comparable](a []T, b []T) []T {
+	var result []T = a
+	for _, elem := range b {
+		if !Contains(a, elem) {
+			result = append(result, elem)
+		}
+	}
+	return result
+}
+
+func Intersection[T comparable](a []T, b []T) []T {
+	var result []T
+	for _, elem := range b {
+		if Contains(a, elem) {
+			result = append(result, elem)
+		}
+	}
+	return result
+}
+
+func Exclusion[T comparable](a []T, b []T) []T {
+	var result []T
+	for _, elem := range a {
+		if !Contains(b, elem) {
+			result = append(result, elem)
+		}
+	}
+	return result
 }

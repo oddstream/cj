@@ -11,18 +11,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"sync"
-
-	"oddstream.cj/util"
-)
-
-const (
-	LITERAL = iota
-	REGEX
 )
 
 type SearchOptions struct {
-	Kind   int
-	Regex  *regexp.Regexp
+	RX     *regexp.Regexp
 	Finder *stringFinder
 }
 
@@ -45,10 +37,6 @@ func Search(paths []string, opts *SearchOptions) []string {
 		dirTraversal(path, opts, &results, searchJobs, &wg)
 	}
 	wg.Wait()
-
-	if opts.Kind == REGEX {
-		results = util.RemoveDuplicateStrings(results)
-	}
 
 	return results // ADDED
 }
@@ -107,19 +95,18 @@ func searchWorker(jobs chan *searchJob, wg *sync.WaitGroup) {
 				break // ADDED completely ignore binary files
 			}
 
-			if job.opts.Kind == LITERAL {
+			if job.opts.Finder != nil {
 				if job.opts.Finder.next(text) != -1 {
 					*job.results = append(*job.results, job.path)
 					break // ADDED only find each file once
 				}
-			} else if job.opts.Kind == REGEX {
-				if founds := job.opts.Regex.FindAll(text, -1); founds != nil {
-					// if found := job.opts.Regex.Find(scanner.Bytes()); found != nil {
-					// *job.results = append(*job.results, string(found))
-					for _, found := range founds {
-						// TODO use a map to eliminate duplicates
-						*job.results = append(*job.results, string(found))
-					}
+			} else if job.opts.RX != nil {
+				// just find the first match with Find()
+				// or use FindAll() to return a slice of founds
+				// (or store results in a map to elimiate duplicates)
+				if found := job.opts.RX.Find(text); found != nil {
+					*job.results = append(*job.results, string(found))
+					// don't break here because a note can contain many different hashtags
 				}
 			}
 			line++

@@ -4,6 +4,20 @@ COMMONPLACE JOURNAL TODO
 [ ] new name - cj - commonplace journal?
 [ ] retire com, use vscode | Typora | Marktext instead
 
+[ ] case-insensitive search using RegExp
+	b := regexp.MustCompile("(?i)we").MatchString("West East")
+
+	grep -r -i dog .cj
+	grep -l -r -i monkey .cj
+	egrep -r -i \#[[:alnum:]]+ .cj
+
+[ ] little button to clear the searchEntry
+[ ] BUG won't find [X] if it's the first three characters in a note
+	but will find Sat
+
+[ ] don't really need to prev/next day toolbar icons
+	could add shortcuts
+
 [ ] shortcuts
 	see "Adding shortcuts to an Entry" at https://developer.fyne.io/explore/shortcuts
 	to add shorts to note multilinentry, for save, find all etc
@@ -12,12 +26,11 @@ COMMONPLACE JOURNAL TODO
 	can get CursorRow, CursorColumn int
 	Entry.InsertText() https://github.com/fyne-io/fyne/issues/3445
 
-[ ] find
+[ ] three finders
 	dynamic find (type in the entry, list is dynamically displayed)
 	find hashtags (find all hashtags using regexp, display in list)
-	find all
 	find/widen/narrow/exclude
-		needs seperate modal popup
+	(not find all, that was in com)
 
 [ ] steal ideas from https://www.tagspaces.org
 [ ] findAll is finding them all but not displaying properly
@@ -31,7 +44,7 @@ COMMONPLACE JOURNAL TODO
 [ ] com: color-codes notes? aren't Books and #hashtags enough?
 	scan for #blue #red #green tags and change theme when loading
 [ ] detect if note has changed on disk
-[ ] com find all notes
+[X] com find all notes
 [ ] DocumentCreateIcon
 [ ] more visible caret in entry widget
 [ ] Find the Entry source, read it, roll your own?
@@ -90,11 +103,14 @@ COMMONPLACE JOURNAL TODO
 	use the JavaFX Scene Builder (not JavaFX Script, which is discontinued)
 	Maven, Gradle, OpenJDK, JavaFX versions ...
 
+[ ] redo in https://gioui.org/
+	calendar widget
 [x] redo in www.electronjs.org/ (like marktext, vscode), but then it would be huge.
 [x] redo in Gambas (no date picker?)
 [x] redo in https://xojo.com $399/year to write BASIC apps? No thank you.
 [x] redo in Ruby/Shoes (learn Ruby and roll your own date picker) (editor might be shit, again)
-[x] redo on Vala/GTK, but then it would be Gnome only, no Windows, Mac, mobile.
+[x] redo on Vala/GTK, but then it would be Gnome only, no Windows, Mac, mobile. So what?
+	https://wiki.gnome.org/Projects/Vala/Tutorial
 
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE

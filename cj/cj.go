@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"regexp"
 	"strconv"
@@ -21,7 +23,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"oddstream.cj/fynex"
 	"oddstream.cj/note"
-	"oddstream.cj/search"
 	"oddstream.cj/util"
 )
 
@@ -30,21 +31,13 @@ const (
 	appVersion = "0.1"
 )
 
-type ui struct {
-	current *cjNote
-	found   []*cjNote
-
-	w           fyne.Window
-	toolbar     *widget.Toolbar
-	calendar    *fyne.Container //*Calendar
-	searchEntry *widget.Entry
-	foundList   *widget.List
-	noteEntry   *widget.Entry
-}
-
 type cjNote struct {
 	note.Note
 	date time.Time
+}
+
+func (n *cjNote) daysBetween(m *cjNote) int {
+	return int(n.date.Sub(m.date).Hours() / 24)
 }
 
 func (n *cjNote) fname() string {
@@ -68,6 +61,18 @@ var (
 	theJournalDir  string // eg Default
 	debugMode      bool
 )
+
+type ui struct {
+	current *cjNote
+	found   []*cjNote
+
+	w           fyne.Window
+	toolbar     *widget.Toolbar
+	calendar    *fyne.Container //*Calendar
+	searchEntry *widget.Entry
+	foundList   *widget.List
+	noteEntry   *widget.Entry
+}
 
 func appTitle() string {
 	return "Commonplace Journal - " + theJournalDir
@@ -102,9 +107,9 @@ func (u *ui) saveDirtyNote() {
 }
 
 func (u *ui) setCurrent(n *cjNote) {
-	theUI.current = n
-	theUI.noteEntry.SetText(theUI.current.Text)
-	theUI.calendar.Objects[0] = fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
+	u.current = n
+	u.noteEntry.SetText(theUI.current.Text)
+	u.calendar.Objects[0] = fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
 }
 
 func calendarTapped(t time.Time) {
@@ -119,30 +124,126 @@ func calendarIsDateImportant(t time.Time) bool {
 		t.Day() == theUI.current.date.Day()
 }
 
-func (u *ui) find(query string) {
+func find(query string) []*cjNote {
+	var found []*cjNote
+
 	if query == "" {
-		return
+		return found
 	}
-	// query = strings.ToLower(query)
 
-	u.found = []*cjNote{}
+	cmd := exec.Command("grep",
+		"--extended-regexp",
+		"--recursive",
+		"--ignore-case",
+		"--files-with-matches",
+		regexp.QuoteMeta(query),
+		path.Join(theUserHomeDir, theDataDir))
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalf("cmd.Start() failed with %s\n", err)
+	}
+	stdin := bufio.NewScanner(stdout)
+	for stdin.Scan() {
+		// fmt.Println(stdin.Text())
+		n := makeAndLoadNote(parseDateFromFname(stdin.Text()))
+		found = append(found, n)
+	}
+	cmd.Wait()
 
-	opts := &search.SearchOptions{
-		Kind:   search.LITERAL,
-		Regex:  nil,
-		Finder: search.MakeStringFinder([]byte(query)),
-	}
-	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, theJournalDir)}, opts)
-	for _, fname := range results {
-		n := makeAndLoadNote(parseDateFromFname(fname))
-		u.found = append(theUI.found, n)
-	}
+	return found
 }
 
 func listSelected(id widget.ListItemID) {
 	// log.Printf("list item %d selected", id)
 	theUI.saveDirtyNote()
 	theUI.setCurrent(theUI.found[id])
+}
+
+func contains(lst []*cjNote, b *cjNote) bool {
+	for _, n := range lst {
+		if n.daysBetween(b) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *ui) postFind(query string) {
+	if len(u.found) > 0 {
+		u.searchEntry.Text = query
+		u.searchEntry.Refresh()
+
+		u.foundList.Select(0)
+		u.foundList.Refresh()
+
+		u.setCurrent(u.found[0])
+	} else {
+		u.foundList.UnselectAll()
+		u.foundList.Refresh()
+	}
+}
+
+func (u *ui) findEx() {
+	var pu *widget.PopUp
+
+	ent := widget.NewEntry()
+	ent.PlaceHolder = "Search"
+	widen := widget.NewButton("Widen", func() {
+		results := find(ent.Text)
+		if len(results) == 0 {
+			return
+		}
+		var newFound []*cjNote = u.found
+		for _, n := range results {
+			if !contains(u.found, n) {
+				newFound = append(newFound, n)
+			}
+		}
+		u.found = newFound
+		u.postFind("")
+		pu.Hide()
+	})
+	narrow := widget.NewButton("Narrow", func() {
+		results := find(ent.Text)
+		if len(results) == 0 {
+			return
+		}
+		var newFound []*cjNote
+		for _, n := range results {
+			if contains(u.found, n) {
+				newFound = append(newFound, n)
+			}
+		}
+		u.found = newFound
+		u.postFind("")
+		pu.Hide()
+	})
+	exclude := widget.NewButton("Exclude", func() {
+		results := find(ent.Text)
+		if len(results) == 0 {
+			return
+		}
+		var newFound []*cjNote
+		for _, n := range results {
+			if !contains(u.found, n) {
+				newFound = append(newFound, n)
+			}
+		}
+		u.found = newFound
+		u.postFind("")
+		pu.Hide()
+	})
+	cancel := widget.NewButton("Cancel", func() {
+		pu.Hide()
+	})
+	content := container.New(layout.NewVBoxLayout(), ent, widen, narrow, exclude, cancel)
+
+	pu = widget.NewModalPopUp(content, u.w.Canvas())
+	pu.Show()
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
@@ -175,13 +276,13 @@ func buildUI(u *ui) fyne.CanvasObject {
 	u.searchEntry.OnChanged = func(str string) {
 		u.found = []*cjNote{}
 		if len(str) > 1 {
-			u.find(str)
+			u.found = find(str)
 		}
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
 	}
 	// u.searchEntry.OnSubmitted = func(str string) {
-	// 	u.find(str)
+	// 	u.found = find(str)
 	// }
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	u.foundList = widget.NewList(
@@ -212,10 +313,6 @@ func buildUI(u *ui) fyne.CanvasObject {
 	return fynex.NewAdaptiveSplit(side, mainPanel)
 }
 
-// func (u *ui) showMarkdownPopup(parentCanvas fyne.Canvas) {
-// 	widget.ShowPopUp(widget.NewRichTextFromMarkdown(u.current.text), parentCanvas)
-// }
-
 func (u *ui) promptUserForJournalDir() {
 	var journalDirs []string
 
@@ -245,9 +342,6 @@ func (u *ui) promptUserForJournalDir() {
 		if str == "" {
 			return
 		}
-		// if debugMode {
-		// 	log.Println("setting theJournalDir to", theJournalDir)
-		// }
 		if str != theJournalDir {
 			theJournalDir = str
 			calendarTapped(time.Now())
@@ -258,29 +352,36 @@ func (u *ui) promptUserForJournalDir() {
 	})
 }
 
-func (u *ui) injectSearch(query string) {
-	u.find(query)
-	if len(theUI.found) > 0 {
-		u.searchEntry.Text = query
-		u.searchEntry.Refresh()
-
-		u.foundList.Select(0)
-		u.foundList.Refresh()
-
-		u.setCurrent(u.found[0])
-	}
-}
-
 func (u *ui) searchForHashTags() {
-	opts := &search.SearchOptions{
-		Kind:   search.REGEX,
-		Regex:  regexp.MustCompile("#[[:alnum:]]+"),
-		Finder: nil,
+	cmd := exec.Command("grep",
+		"--extended-regexp",
+		"--recursive",
+		"--ignore-case",
+		"--only-matching",
+		// "--files-with-matches",
+		"--no-filename",
+		"#[[:alnum:]]+",
+		path.Join(theUserHomeDir, theDataDir))
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
 	}
-	results := search.Search([]string{path.Join(theUserHomeDir, theDataDir, theJournalDir)}, opts)
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalf("cmd.Start() failed with %s\n", err)
+	}
+	stdin := bufio.NewScanner(stdout)
+	var results []string
+	for stdin.Scan() {
+		// fmt.Println(stdin.Text())
+		results = append(results, stdin.Text())
+	}
+	cmd.Wait()
 	if len(results) > 0 {
+		results = util.RemoveDuplicateStrings(results)
 		fynex.ShowListPopUp2(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
-			u.injectSearch(str)
+			theUI.found = find(str)
+			theUI.postFind(str)
 		})
 	}
 }
@@ -325,6 +426,13 @@ func main() {
 	theUI = &ui{w: a.NewWindow(appTitle()), current: makeAndLoadNote(time.Now())}
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
+	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
+	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
+		if len(theUI.found) > 0 {
+			theUI.findEx()
+		}
+	})
+	// don't need this: just tap the 'today' icon in the taskbar
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
 		theUI.saveDirtyNote()

@@ -38,6 +38,8 @@ The idea came from [The Sephist's article](https://thesephist.com/posts/inc/) an
 
 The general idea is have an instance of `cj` open all the time, where you put notes and bits of text as they come up during the day. (You can have more than one instance of `cj` open, one for each journal, if you use multiple journals.) Then, have one or more instances of a markdown editor open, and copy-and-paste text from `cj` to the markdown editor as that information endures or needs categorization.
 
+Prefix any to-do type journal entries with `[ ]` and turn them into `[X]` when they are completed. Find incomplete entries by searching for `[ ]`.
+
 Thereafter, because all the notes are just text files in directory trees, they can be manipulated, exported, reformatted by worthier and more appropriate tools.
 
 ## Implementation

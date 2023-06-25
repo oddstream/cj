@@ -1,19 +1,12 @@
 
 COMMONPLACE JOURNAL TODO
 
-[ ] new name - cj - commonplace journal?
-[ ] retire com, use vscode | Typora | Marktext instead
-
-[ ] case-insensitive search using RegExp
-	b := regexp.MustCompile("(?i)we").MatchString("West East")
-
-	grep -r -i dog .cj
-	grep -l -r -i monkey .cj
-	egrep -r -i \#[[:alnum:]]+ .cj
+[ ] now we use grep for search
+	how about using an external editor?
+	https://micro-editor.github.io/
+	piggyback found words/hashtags on syntax highlighting
 
 [ ] little button to clear the searchEntry
-[ ] BUG won't find [X] if it's the first three characters in a note
-	but will find Sat
 
 [ ] don't really need to prev/next day toolbar icons
 	could add shortcuts
@@ -69,7 +62,6 @@ COMMONPLACE JOURNAL TODO
 [ ] app desktop icon
 	create a .desktop file in /usr/share/applications
 [ ] Update list if note title edited (on save, implied reloading note)
-[ ] search is case sensitive
 [ ] copy .SelectedText() to find entry when Ctrl+F
 [ ] Backup to .zip file 'nincomp<date of backup>.zip'
 [ ] found list has two columns: date (ISO 8601) and text (first line)?
@@ -105,6 +97,8 @@ COMMONPLACE JOURNAL TODO
 
 [ ] redo in https://gioui.org/
 	calendar widget
+[ ] redo in Bubbletea
+	https://golangscript.com/g/line-editor-based-on-the-bubbletea-library
 [x] redo in www.electronjs.org/ (like marktext, vscode), but then it would be huge.
 [x] redo in Gambas (no date picker?)
 [x] redo in https://xojo.com $399/year to write BASIC apps? No thank you.
@@ -113,8 +107,16 @@ COMMONPLACE JOURNAL TODO
 	https://wiki.gnome.org/Projects/Vala/Tutorial
 
 
+[ ] fyne tries to open /home/gilbert/.config/incrementaljournal/preferences.json
+	and /home/gilbert/.config/fyne/settings.json
+	and /home/gilbert/.config/fyne/theme.json
+	according to strace
+
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
+[x] search uses grep; retire search.go to .junk
+[x] com retired to .junk
+[x] new name - cj - commonplace journal?
 [x] com: find a note, create a new note, then click on found note: nothing happens, stuck on new note
 	implies create new note should zap the found list?
 [x] different books in tabs? no, open different instances

@@ -44,7 +44,13 @@ Thereafter, because all the notes are just text files in directory trees, they c
 
 ## Implementation
 
-`cj` is written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library. The search code is copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go). I could - maybe should - be doing this in Dart and Flutter, but I happened to be using Go at the time. There's no indexing or anything fancy going on under the hood - what we have here is a text editor, grep and a simple user interface.
+`cj` is written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library.
+
+The search code was copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go), but the need for simplicity and flexibility saw that (very fast code) retired and replaced by using `grep`. I've tested `cj` with `grep` version 3.7 on Linux, and it seems fine. You'd better have `grep` available on your PATH, otherwise searching won't work.
+
+There's no indexing or anything fancy going on under the hood - what we have here is a basic text editor, grep and a small user interface.
+
+I could - maybe should - be doing this in Dart and Flutter, but I happened to be using Go at the time.
 
 ## Local file storage
 
@@ -77,8 +83,7 @@ No tricksy or closed file formats here, no sir.
 
 ## TODO
 
-- Better text editor (including spellchecking, found word highlighting, follow url, more visible caret, more keyboard shortcuts)
-- The current search is very efficient, but case sensitive
+- Better text editor (including spellchecking, found word highlighting, follow hyperlink, more visible caret, keyboard shortcuts for move word/delete line/goto start/goto end)
 - Support for moving text from `cj` to a markdown editor, to facilitate short term to long term note workflow; maybe right-click popup 'copy selected text to commonplace book' ...
 - More support for hashtags (eg tap on a hashtag to find notes containing it, insert hashtag from dict)
 - Support for creating backups, or git, or cloud (Fyne has some cloud support)

@@ -358,7 +358,6 @@ func (u *ui) searchForHashTags() {
 		"--recursive",
 		"--ignore-case",
 		"--only-matching",
-		// "--files-with-matches",
 		"--no-filename",
 		"#[[:alnum:]]+",
 		path.Join(theUserHomeDir, theDataDir))

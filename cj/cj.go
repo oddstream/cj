@@ -78,9 +78,12 @@ func appTitle() string {
 	return "Commonplace Journal - " + theJournalDir
 }
 
-func parseDateFromFname(fname string) time.Time {
+func parseDateFromFname(pathname string) time.Time {
+	// TODO this is as ugly as fuck and needs reworking
+	// pathname comes from the output of grep, and looks like
+	// /home/gilbert/.cj/Default/2023/06/10.txt
 	var t = time.Time{}
-	lst := strings.Split(fname, string(os.PathSeparator))
+	lst := strings.Split(pathname, string(os.PathSeparator))
 	for i := 0; i < len(lst)-3; i++ {
 		if lst[i] == theJournalDir {
 			if y, err := strconv.Atoi(lst[i+1]); err == nil {
@@ -372,8 +375,10 @@ func (u *ui) searchForHashTags() {
 	stdin := bufio.NewScanner(stdout)
 	var results []string
 	for stdin.Scan() {
-		// fmt.Println(stdin.Text())
-		results = append(results, stdin.Text())
+		txt := stdin.Text()
+		txt = strings.ToLower(txt)
+		// fmt.Println(txt)
+		results = append(results, txt)
 	}
 	cmd.Wait()
 	if len(results) > 0 {

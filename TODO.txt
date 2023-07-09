@@ -114,6 +114,7 @@ COMMONPLACE JOURNAL TODO
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
+[x] convert all found #hashtags into lower case
 [x] search uses grep; retire search.go to .junk
 [x] com retired to .junk
 [x] new name - cj - commonplace journal?

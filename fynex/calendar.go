@@ -71,7 +71,7 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 
 // MinSize sets the minimum size for the calendar
 func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	return fyne.NewSize(240, 210)
+	return fyne.NewSize(240, 240)
 }
 
 // Calendar creates a new date time picker which returns a time object

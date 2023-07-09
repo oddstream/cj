@@ -11,28 +11,13 @@ type Note struct {
 	Text string // the text of the note, when loaded
 }
 
-func (n *Note) Load(fname string) {
-	// println("load", fname)
-	if file, err := os.Open(fname); err == nil {
-		fi, err := file.Stat()
-		if err != nil {
-			log.Fatal(err, " getting FileInfo ", fname)
-		}
-		if fi.Size() == 0 {
-			log.Println(fname, " is empty")
-		} else {
-			bytes := make([]byte, fi.Size()+8)
-			count, err := file.Read(bytes)
-			if err != nil {
-				log.Fatal(err, " reading ", fname)
-			}
-			n.Text = string(bytes[:count])
-		}
-		err = file.Close()
-		if err != nil {
-			log.Fatal(err, " closing ", fname)
-		}
+func (n *Note) Load(pathname string) {
+	bytes, err := os.ReadFile(pathname)
+	if err != nil {
+		// it's ok if pathname does not exist
+		// log.Print(err)
 	}
+	n.Text = string(bytes)
 }
 
 func isStringEmpty(str string) bool {
@@ -44,37 +29,36 @@ func isStringEmpty(str string) bool {
 	return true
 }
 
-func (n *Note) Save(fname string) {
+func (n *Note) Save(pathname string) {
 	// println("save", fname)
 	if isStringEmpty(n.Text) {
-		n.Remove(fname)
+		n.Remove(pathname)
 		return
 	}
 
+	var err error
+
 	// make sure the data dir has been created
-	dir, _ := filepath.Split(fname)
-	err := os.MkdirAll(dir, 0755) // https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value
-	if err != nil {
+	dir, _ := filepath.Split(pathname)
+	// https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value
+	if err = os.MkdirAll(dir, 0755); err != nil {
 		log.Fatal(err)
 	}
 	// if path is already a directory, MkdirAll does nothing and returns nil
 
-	// now save the note text to file
-	file, err := os.Create(fname)
-	if err != nil {
+	var file *os.File
+	if file, err = os.Create(pathname); err != nil {
 		log.Fatal(err)
 	}
-	_, err = file.Write([]byte(n.Text))
-	if err != nil {
+	if _, err = file.Write([]byte(n.Text)); err != nil {
 		log.Fatal(err)
 	}
-	err = file.Close()
-	if err != nil {
+	if err = file.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (n *Note) Remove(fname string) {
-	println("remove", fname)
+	// println("remove", fname)
 	os.Remove(fname)
 }

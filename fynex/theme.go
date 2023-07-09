@@ -14,6 +14,7 @@ var bookIconBytes []byte // https://www.iconsdb.com/white-icons/book-icon.html
 //go:embed icons/today-128.png
 var todayIconBytes []byte // https://www.iconsdb.com/white-icons/today-icon.html
 
+/*
 //go:embed "fonts/Hack-Regular.ttf"
 var fontBytes []byte
 
@@ -21,6 +22,7 @@ var resourceFontTtf = &fyne.StaticResource{
 	StaticName:    "Hack.ttf",
 	StaticContent: fontBytes,
 }
+*/
 
 type NoteTheme struct {
 	FontSize float32
@@ -34,9 +36,9 @@ func (nt *NoteTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Col
 }
 
 func (nt *NoteTheme) Font(s fyne.TextStyle) fyne.Resource {
-	// return theme.DefaultTextMonospaceFont()
+	return theme.DefaultTextMonospaceFont()
 	// return theme.TextMonospaceFont()
-	return resourceFontTtf
+	// return resourceFontTtf
 }
 
 func (nt *NoteTheme) Icon(n fyne.ThemeIconName) fyne.Resource {

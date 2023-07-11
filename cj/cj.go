@@ -26,6 +26,9 @@ import (
 	"oddstream.cj/util"
 )
 
+//go:embed today-128.png
+var todayIconBytes []byte // https://www.iconsdb.com/white-icons/today-icon.html
+
 const (
 	appName    = "cj"
 	appVersion = "0.1"
@@ -319,8 +322,6 @@ func buildUI(u *ui) fyne.CanvasObject {
 func (u *ui) promptUserForJournalDir() {
 	var journalDirs []string
 
-	// get a list of directories
-
 	homePath := path.Join(theUserHomeDir, theDataDir)
 	f, err := os.Open(homePath)
 	if err != nil {
@@ -330,7 +331,11 @@ func (u *ui) promptUserForJournalDir() {
 	if err != nil {
 		log.Fatalf("couldn't read dir names for path %s: %s\n", homePath, err)
 	}
-	journalDirs = append(journalDirs, dirNames...)
+	for _, dirName := range dirNames {
+		if !strings.HasPrefix(dirName, ".") {
+			journalDirs = append(journalDirs, dirName)
+		}
+	}
 	if len(journalDirs) == 1 {
 		theJournalDir = journalDirs[0]
 		return
@@ -398,12 +403,11 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	var fontSize, windowWidth, windowHeight int
+	var windowWidth, windowHeight int
 	reportVersion := flag.Bool("version", false, "report app version")
 	flag.BoolVar(&debugMode, "debug", false, "turn debug mode on")
 	flag.StringVar(&theDataDir, "data", ".cj", "name of the data directory")
 	flag.StringVar(&theJournalDir, "Journal", "Default", "name of the journal to open")
-	flag.IntVar(&fontSize, "fontSize", 15, "font size")
 	flag.IntVar(&windowWidth, "width", 1024, "width of the window")
 	flag.IntVar(&windowHeight, "height", 640, "height of the window")
 	flag.Parse()
@@ -413,19 +417,21 @@ func main() {
 	}
 
 	if debugMode {
-		if str, err := os.Executable(); err != nil {
-			log.Printf("err: %T, %v\n", err, err)
-		} else {
-			log.Printf("str: %T, %v\n", str, str)
-		}
+		// if str, err := os.Executable(); err != nil {
+		// 	log.Printf("err: %T, %v\n", err, err)
+		// } else {
+		// 	log.Printf("str: %T, %v\n", str, str)
+		// }
 		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\njournal:", theJournalDir)
 	}
 
-	a := app.NewWithID("oddstream.incrementaljournal")
+	a := app.NewWithID("oddstream.cj")
+	a.SetIcon(&fyne.StaticResource{
+		StaticName:    "today.png",
+		StaticContent: todayIconBytes,
+	})
 
-	th := &fynex.NoteTheme{FontSize: float32(fontSize), IconName: "today"}
-	a.Settings().SetTheme(th)
-	a.SetIcon(th.BookIcon())
+	a.Settings().SetTheme(fynex.NewNoteTheme(path.Join(theUserHomeDir, theDataDir, "theme.json")))
 
 	theUI = &ui{w: a.NewWindow(appTitle()), current: makeAndLoadNote(time.Now())}
 

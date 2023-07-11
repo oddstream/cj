@@ -4,24 +4,23 @@ import (
 	"bufio"
 	"sort"
 	"strings"
-	"unicode"
 )
 
-func Sanitize(str string) string {
-	var b strings.Builder
-	for _, r := range str {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) {
-			b.WriteRune(r)
-		} else if unicode.IsSpace(r) {
-			b.WriteRune(' ')
-		} else {
-			b.WriteRune('_')
-		}
-	}
-	s := b.String()
-	s = strings.TrimSpace(s)
-	return s
-}
+// func Sanitize(str string) string {
+// 	var b strings.Builder
+// 	for _, r := range str {
+// 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+// 			b.WriteRune(r)
+// 		} else if unicode.IsSpace(r) {
+// 			b.WriteRune(' ')
+// 		} else {
+// 			b.WriteRune('_')
+// 		}
+// 	}
+// 	s := b.String()
+// 	s = strings.TrimSpace(s)
+// 	return s
+// }
 
 func FirstLine(text string) string {
 	var line string

@@ -49,32 +49,32 @@ func ShowListPopUp2(canvas fyne.Canvas, title string, strs []string, okCallback 
 	pu.Show()
 }
 
-func ShowListEntryPopUp(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
-	var pu *widget.PopUp
-	hdr := widget.NewLabel(title)
-	var currSel string
-	sel := widget.NewSelect(strs, func(str string) {
-		currSel = str
-	})
-	ent := widget.NewEntry()
-	ent.PlaceHolder = "New"
-	guts := container.New(layout.NewVBoxLayout(), sel, ent)
-	ok := widget.NewButton("OK", func() {
-		txt := ent.Text
-		if txt == "" {
-			txt = currSel
-		}
-		okCallback(txt)
-		pu.Hide()
-	})
-	cancel := widget.NewButton("Cancel", func() {
-		pu.Hide()
-	})
-	bottom := container.New(layout.NewGridLayout(2), ok, cancel)
-	content := container.New(layout.NewBorderLayout(hdr, bottom, nil, nil), hdr, bottom, guts)
-	pu = widget.NewModalPopUp(content, canvas)
-	pu.Show()
-}
+// func ShowListEntryPopUp(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
+// 	var pu *widget.PopUp
+// 	hdr := widget.NewLabel(title)
+// 	var currSel string
+// 	sel := widget.NewSelect(strs, func(str string) {
+// 		currSel = str
+// 	})
+// 	ent := widget.NewEntry()
+// 	ent.PlaceHolder = "New"
+// 	guts := container.New(layout.NewVBoxLayout(), sel, ent)
+// 	ok := widget.NewButton("OK", func() {
+// 		txt := ent.Text
+// 		if txt == "" {
+// 			txt = currSel
+// 		}
+// 		okCallback(txt)
+// 		pu.Hide()
+// 	})
+// 	cancel := widget.NewButton("Cancel", func() {
+// 		pu.Hide()
+// 	})
+// 	bottom := container.New(layout.NewGridLayout(2), ok, cancel)
+// 	content := container.New(layout.NewBorderLayout(hdr, bottom, nil, nil), hdr, bottom, guts)
+// 	pu = widget.NewModalPopUp(content, canvas)
+// 	pu.Show()
+// }
 
 func ShowListEntryPopUp2(canvas fyne.Canvas, title string, strs []string, okCallback func(string)) {
 	var pu *widget.PopUp
@@ -115,24 +115,24 @@ func ShowListEntryPopUp2(canvas fyne.Canvas, title string, strs []string, okCall
 	pu.Show()
 }
 
-func ShowMarkdownPopup(parentCanvas fyne.Canvas, text string) {
-	mkdn := widget.NewRichTextFromMarkdown(text)
-	content := container.New(layout.NewBorderLayout(nil, nil, nil, nil), mkdn)
-	pu := widget.NewPopUp(content, parentCanvas)
-	pu.Show()
-}
+// func ShowMarkdownPopup(parentCanvas fyne.Canvas, text string) {
+// 	mkdn := widget.NewRichTextFromMarkdown(text)
+// 	content := container.New(layout.NewBorderLayout(nil, nil, nil, nil), mkdn)
+// 	pu := widget.NewPopUp(content, parentCanvas)
+// 	pu.Show()
+// }
 
-var popupMenu *widget.PopUpMenu
+// var popupMenu *widget.PopUpMenu
 
-func ShowMenuPopup(parentCanvas fyne.Canvas, parent *widget.Toolbar) {
-	// NewPopUpMenu creates a new, reusable popup menu. You can show it using ShowAtPosition
-	if popupMenu == nil {
-		menuItem1 := fyne.NewMenuItem("A", nil)
-		menuItem2 := fyne.NewMenuItem("B", nil)
-		menuItem3 := fyne.NewMenuItem("C", nil)
-		menu := fyne.NewMenu("File", menuItem1, menuItem2, menuItem3)
-		popupMenu = widget.NewPopUpMenu(menu, parentCanvas)
-	}
-	popupMenu.ShowAtPosition(parent.Position())
-	// popupMenu.Show()
-}
+// func ShowMenuPopup(parentCanvas fyne.Canvas, parent *widget.Toolbar) {
+// 	// NewPopUpMenu creates a new, reusable popup menu. You can show it using ShowAtPosition
+// 	if popupMenu == nil {
+// 		menuItem1 := fyne.NewMenuItem("A", nil)
+// 		menuItem2 := fyne.NewMenuItem("B", nil)
+// 		menuItem3 := fyne.NewMenuItem("C", nil)
+// 		menu := fyne.NewMenu("File", menuItem1, menuItem2, menuItem3)
+// 		popupMenu = widget.NewPopUpMenu(menu, parentCanvas)
+// 	}
+// 	popupMenu.ShowAtPosition(parent.Position())
+// 	// popupMenu.Show()
+// }

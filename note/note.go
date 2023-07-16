@@ -12,11 +12,7 @@ type Note struct {
 }
 
 func (n *Note) Load(pathname string) {
-	bytes, err := os.ReadFile(pathname)
-	if err != nil {
-		// it's ok if pathname does not exist
-		// log.Print(err)
-	}
+	bytes, _ := os.ReadFile(pathname) // ignore error return because it's ok if pathname does not exist
 	n.Text = string(bytes)
 }
 
@@ -30,7 +26,6 @@ func isStringEmpty(str string) bool {
 }
 
 func (n *Note) Save(pathname string) {
-	// println("save", fname)
 	if isStringEmpty(n.Text) {
 		n.Remove(pathname)
 		return
@@ -59,6 +54,5 @@ func (n *Note) Save(pathname string) {
 }
 
 func (n *Note) Remove(fname string) {
-	// println("remove", fname)
 	os.Remove(fname)
 }

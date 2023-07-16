@@ -52,8 +52,7 @@ func (n *cjNote) fname() string {
 
 func makeAndLoadNote(t time.Time) *cjNote {
 	n := &cjNote{date: t}
-	fname := n.fname()
-	n.Load(fname)
+	n.Load(n.fname())
 	return n
 }
 
@@ -158,7 +157,7 @@ func find(query string) []*cjNote {
 		n := makeAndLoadNote(parseDateFromFname(stdin.Text()))
 		found = append(found, n)
 	}
-	cmd.Wait()
+	cmd.Wait() // ignore error return because we're done
 
 	return found
 }
@@ -385,7 +384,7 @@ func (u *ui) searchForHashTags() {
 		// fmt.Println(txt)
 		results = append(results, txt)
 	}
-	cmd.Wait()
+	cmd.Wait() // ignore error return because we're done
 	if len(results) > 0 {
 		results = util.RemoveDuplicateStrings(results)
 		fynex.ShowListPopUp2(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
@@ -431,7 +430,8 @@ func main() {
 		StaticContent: todayIconBytes,
 	})
 
-	a.Settings().SetTheme(fynex.NewNoteTheme(path.Join(theUserHomeDir, theDataDir, "theme.json")))
+	th := fynex.NewNoteTheme()
+	a.Settings().SetTheme(&th)
 
 	theUI = &ui{w: a.NewWindow(appTitle()), current: makeAndLoadNote(time.Now())}
 

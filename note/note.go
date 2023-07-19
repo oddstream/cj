@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"unicode"
 )
 
 type Note struct {
@@ -16,23 +15,8 @@ func (n *Note) Load(pathname string) {
 	n.Text = string(bytes)
 }
 
-func isStringEmpty(str string) bool {
-	for _, r := range str {
-		if !unicode.IsSpace(r) {
-			return false
-		}
-	}
-	return true
-}
-
 func (n *Note) Save(pathname string) {
-	if isStringEmpty(n.Text) {
-		n.Remove(pathname)
-		return
-	}
-
 	var err error
-
 	// make sure the data dir has been created
 	dir, _ := filepath.Split(pathname)
 	// https://stackoverflow.com/questions/14249467/os-mkdir-and-os-mkdirall-permission-value

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 // func Sanitize(str string) string {
@@ -32,6 +33,15 @@ func FirstLine(text string) string {
 		}
 	}
 	return line
+}
+
+func IsStringEmpty(str string) bool {
+	for _, r := range str {
+		if !unicode.IsSpace(r) {
+			return false
+		}
+	}
+	return true
 }
 
 /*

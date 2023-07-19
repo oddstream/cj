@@ -26,7 +26,7 @@ import (
 	"oddstream.cj/util"
 )
 
-//go:embed today-128.png
+//go:embed today-48.png
 var todayIconBytes []byte // https://www.iconsdb.com/white-icons/today-icon.html
 
 const (
@@ -36,24 +36,22 @@ const (
 
 type cjNote struct {
 	note.Note
-	date time.Time
+	date     time.Time
+	pathname string
+}
+
+func makeAndLoadNote(date time.Time) *cjNote {
+	n := &cjNote{date: date}
+	n.pathname = path.Join(theUserHomeDir, theDataDir, theJournalDir,
+		fmt.Sprintf("%04d", n.date.Year()),
+		fmt.Sprintf("%02d", n.date.Month()),
+		fmt.Sprintf("%02d.txt", n.date.Day()))
+	n.Load(n.pathname)
+	return n
 }
 
 func (n *cjNote) daysBetween(m *cjNote) int {
 	return int(n.date.Sub(m.date).Hours() / 24)
-}
-
-func (n *cjNote) fname() string {
-	return path.Join(theUserHomeDir, theDataDir, theJournalDir,
-		fmt.Sprintf("%04d", n.date.Year()),
-		fmt.Sprintf("%02d", n.date.Month()),
-		fmt.Sprintf("%02d.txt", n.date.Day()))
-}
-
-func makeAndLoadNote(t time.Time) *cjNote {
-	n := &cjNote{date: t}
-	n.Load(n.fname())
-	return n
 }
 
 var (
@@ -61,14 +59,13 @@ var (
 	theUserHomeDir string // eg /home/gilbert
 	theDataDir     string // eg .cj
 	theJournalDir  string // eg Default
+	theNote        *cjNote
+	theFound       []*cjNote
 	debugMode      bool
 )
 
 type ui struct {
-	current *cjNote
-	found   []*cjNote
-
-	w           fyne.Window
+	mainWindow  fyne.Window
 	toolbar     *widget.Toolbar
 	calendar    *fyne.Container //*Calendar
 	searchEntry *widget.Entry
@@ -76,57 +73,98 @@ type ui struct {
 	noteEntry   *widget.Entry
 }
 
-func appTitle() string {
-	return "Commonplace Journal - " + theJournalDir
+func appTitle(t time.Time) string {
+	// return "Commonplace Journal - " + theJournalDir
+	return t.Format("Mon 2 Jan 2006")
+}
+
+func saveDirtyNote() {
+	newText := theUI.noteEntry.Text
+	if newText != theNote.Text {
+		if util.IsStringEmpty(newText) {
+			theNote.Remove(theNote.pathname)
+		} else {
+			theNote.Text = newText
+			theNote.Save(theNote.pathname)
+		}
+	}
+}
+
+func (u *ui) setCurrent(n *cjNote) {
+	theNote = n
+	u.noteEntry.SetText(theNote.Text)
+	u.calendar.Objects[0] = fynex.NewCalendar(theNote.date, calendarTapped, calendarIsDateImportant)
+	u.mainWindow.SetTitle(appTitle(n.date))
+}
+
+func calendarTapped(t time.Time) {
+	saveDirtyNote()
+	theUI.setCurrent(makeAndLoadNote(t))
+	theUI.foundList.UnselectAll()
+	theUI.mainWindow.Canvas().Focus(theUI.noteEntry)
+}
+
+func calendarIsDateImportant(t time.Time) bool {
+	return t.Year() == theNote.date.Year() &&
+		t.Month() == theNote.date.Month() &&
+		t.Day() == theNote.date.Day()
 }
 
 func parseDateFromFname(pathname string) time.Time {
 	// TODO this is as ugly as fuck and needs reworking
 	// pathname comes from the output of grep, and looks like
 	// /home/gilbert/.cj/Default/2023/06/10.txt
-	var t = time.Time{}
-	lst := strings.Split(pathname, string(os.PathSeparator))
-	for i := 0; i < len(lst)-3; i++ {
-		if lst[i] == theJournalDir {
-			if y, err := strconv.Atoi(lst[i+1]); err == nil {
-				if m, err := strconv.Atoi(lst[i+2]); err == nil {
-					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
-						if d, err := strconv.Atoi(f); err == nil {
-							t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
-							break
-						}
-					}
-				}
+	// so we know in advance what the prefix of the pathname is,
+	// so remove it to get
+	// 2023/06/10.txt
+	// then remove the suffix to get
+	// 2023/06/10
+	{
+		prefix := path.Join(theUserHomeDir, theDataDir, theJournalDir) + "/"
+		str := strings.TrimPrefix(pathname, prefix)
+		str = strings.TrimSuffix(str, ".txt")
+		lst := strings.Split(str, string(os.PathSeparator))
+		y, _ := strconv.Atoi(lst[0])
+		m, _ := strconv.Atoi(lst[1])
+		d, _ := strconv.Atoi(lst[2])
+		t := time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+		// fmt.Println(pathname, y, m, d)
+		/*
+			psattern := fmt.Sprintf("/%c2006%c01%c02",
+				os.PathSeparator,
+				os.PathSeparator,
+				os.PathSeparator)
+			// fmt.Println(t)
+			t2, err := time.Parse(psattern, str)
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Println(t2)
 			}
-		}
+		*/
+		return t
 	}
-	return t
-}
+	/*
+	   var t = time.Time{}
+	   lst := strings.Split(pathname, string(os.PathSeparator))
 
-func (u *ui) saveDirtyNote() {
-	newText := u.noteEntry.Text
-	if newText != u.current.Text {
-		u.current.Text = newText
-		u.current.Save(u.current.fname())
-	}
-}
+	   	for i := 0; i < len(lst)-3; i++ {
+	   		if lst[i] == theJournalDir {
+	   			if y, err := strconv.Atoi(lst[i+1]); err == nil {
+	   				if m, err := strconv.Atoi(lst[i+2]); err == nil {
+	   					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
+	   						if d, err := strconv.Atoi(f); err == nil {
+	   							t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+	   							break
+	   						}
+	   					}
+	   				}
+	   			}
+	   		}
+	   	}
 
-func (u *ui) setCurrent(n *cjNote) {
-	u.current = n
-	u.noteEntry.SetText(theUI.current.Text)
-	u.calendar.Objects[0] = fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant)
-}
-
-func calendarTapped(t time.Time) {
-	theUI.saveDirtyNote()
-	theUI.setCurrent(makeAndLoadNote(t))
-	theUI.foundList.UnselectAll()
-}
-
-func calendarIsDateImportant(t time.Time) bool {
-	return t.Year() == theUI.current.date.Year() &&
-		t.Month() == theUI.current.date.Month() &&
-		t.Day() == theUI.current.date.Day()
+	   return t
+	*/
 }
 
 func find(query string) []*cjNote {
@@ -136,6 +174,11 @@ func find(query string) []*cjNote {
 		return found
 	}
 
+	// could use xargs to run several directories in parallel?
+	// expected output is a list of pathnames, one per line, eg
+	// /home/gilbert/.cj/Default/2023/07/04.txt
+	// /home/gilbert/.cj/Default/2023/06/18.txt
+	// could use ripgrep which is faster
 	cmd := exec.Command("grep",
 		"--extended-regexp",
 		"--recursive",
@@ -164,8 +207,8 @@ func find(query string) []*cjNote {
 
 func listSelected(id widget.ListItemID) {
 	// log.Printf("list item %d selected", id)
-	theUI.saveDirtyNote()
-	theUI.setCurrent(theUI.found[id])
+	saveDirtyNote()
+	theUI.setCurrent(theFound[id])
 }
 
 func contains(lst []*cjNote, b *cjNote) bool {
@@ -178,14 +221,14 @@ func contains(lst []*cjNote, b *cjNote) bool {
 }
 
 func (u *ui) postFind(query string) {
-	if len(u.found) > 0 {
+	if len(theFound) > 0 {
 		u.searchEntry.Text = query
 		u.searchEntry.Refresh()
 
 		u.foundList.Select(0)
 		u.foundList.Refresh()
 
-		u.setCurrent(u.found[0])
+		u.setCurrent(theFound[0])
 	} else {
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
@@ -202,13 +245,13 @@ func (u *ui) findEx() {
 		if len(results) == 0 {
 			return
 		}
-		var newFound []*cjNote = u.found
+		var newFound []*cjNote = theFound
 		for _, n := range results {
-			if !contains(u.found, n) {
+			if !contains(theFound, n) {
 				newFound = append(newFound, n)
 			}
 		}
-		u.found = newFound
+		theFound = newFound
 		u.postFind("")
 		pu.Hide()
 	})
@@ -219,11 +262,11 @@ func (u *ui) findEx() {
 		}
 		var newFound []*cjNote
 		for _, n := range results {
-			if contains(u.found, n) {
+			if contains(theFound, n) {
 				newFound = append(newFound, n)
 			}
 		}
-		u.found = newFound
+		theFound = newFound
 		u.postFind("")
 		pu.Hide()
 	})
@@ -234,11 +277,11 @@ func (u *ui) findEx() {
 		}
 		var newFound []*cjNote
 		for _, n := range results {
-			if !contains(u.found, n) {
+			if !contains(theFound, n) {
 				newFound = append(newFound, n)
 			}
 		}
-		u.found = newFound
+		theFound = newFound
 		u.postFind("")
 		pu.Hide()
 	})
@@ -247,7 +290,7 @@ func (u *ui) findEx() {
 	})
 	content := container.New(layout.NewVBoxLayout(), ent, widen, narrow, exclude, cancel)
 
-	pu = widget.NewModalPopUp(content, u.w.Canvas())
+	pu = widget.NewModalPopUp(content, u.mainWindow.Canvas())
 	pu.Show()
 }
 
@@ -257,31 +300,38 @@ func buildUI(u *ui) fyne.CanvasObject {
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			u.promptUserForJournalDir()
 		}),
-		widget.NewToolbarAction(theme.SearchIcon(), func() {
-			theUI.searchForHashTags()
-		}),
-		widget.NewToolbarSeparator(),
-		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
-			t := theUI.current.date
-			t = t.Add(-time.Hour * 24)
-			calendarTapped(t)
-		}),
 		widget.NewToolbarAction(theme.HomeIcon(), func() {
 			calendarTapped(time.Now())
 		}),
-		widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
-			t := theUI.current.date
-			t = t.Add(time.Hour * 24)
-			calendarTapped(t)
+		widget.NewToolbarAction(theme.SearchIcon(), func() {
+			theUI.searchForHashTags()
 		}),
+		widget.NewToolbarAction(theme.StorageIcon(), func() {
+			if len(theFound) > 0 {
+				theUI.findEx()
+			}
+		}),
+		// widget.NewToolbarSeparator(),
+		// widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
+		// 	t := theUI.current.date
+		// 	t = t.Add(-time.Hour * 24)
+		// 	calendarTapped(t)
+		// }),
+		// widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
+		// 	t := theUI.current.date
+		// 	t = t.Add(time.Hour * 24)
+		// 	calendarTapped(t)
+		// }),
 	)
-	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theUI.current.date, calendarTapped, calendarIsDateImportant))
+
+	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theNote.date, calendarTapped, calendarIsDateImportant))
+
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.PlaceHolder = "Search"
 	u.searchEntry.OnChanged = func(str string) {
-		u.found = []*cjNote{}
+		theFound = []*cjNote{}
 		if len(str) > 1 {
-			u.found = find(str)
+			theFound = find(str)
 		}
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
@@ -290,27 +340,36 @@ func buildUI(u *ui) fyne.CanvasObject {
 	// 	u.found = find(str)
 	// }
 	u.searchEntry.TextStyle = fyne.TextStyle{Monospace: true}
+
+	searchEntryClear := widget.NewButtonWithIcon("", theme.ContentClearIcon(), func() {
+		u.searchEntry.SetText("")
+		theUI.mainWindow.Canvas().Focus(theUI.searchEntry)
+	})
+
 	u.foundList = widget.NewList(
 		func() int {
-			return len(theUI.found)
+			return len(theFound)
 		},
 		func() fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			// println("update widget.ListItemID", id)
-			obj.(*widget.Label).SetText(util.FirstLine(theUI.found[id].Text))
+			obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
 		},
 	)
 	u.foundList.OnSelected = listSelected
 
-	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, u.searchEntry)
-	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
-	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
-
 	u.noteEntry = widget.NewMultiLineEntry()
 	u.noteEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	u.noteEntry.Wrapping = fyne.TextWrapWord
+
+	// https://developer.fyne.io/explore/layouts
+
+	searchForm := container.New(layout.NewBorderLayout(nil, nil, nil, searchEntryClear), searchEntryClear, u.searchEntry)
+	sideTop := container.New(layout.NewVBoxLayout(), u.calendar, searchForm)
+	sideBottom := container.New(layout.NewMaxLayout(), u.foundList)
+	side := container.New(layout.NewBorderLayout(sideTop, nil, nil, nil), sideTop, sideBottom)
 
 	mainPanel := container.New(layout.NewBorderLayout(u.toolbar, nil, nil, nil), u.toolbar, u.noteEntry)
 
@@ -345,16 +404,15 @@ func (u *ui) promptUserForJournalDir() {
 	// 	fmt.Println(uri)
 	// }, w)
 
-	fynex.ShowListEntryPopUp2(u.w.Canvas(), "Select Journal", journalDirs, func(str string) {
+	fynex.ShowListEntryPopUp2(u.mainWindow.Canvas(), "Select Journal", journalDirs, func(str string) {
 		if str == "" {
 			return
 		}
 		if str != theJournalDir {
 			theJournalDir = str
 			calendarTapped(time.Now())
-			u.found = []*cjNote{}
+			theFound = []*cjNote{}
 			u.foundList.Refresh()
-			u.w.SetTitle(appTitle())
 		}
 	})
 }
@@ -387,8 +445,8 @@ func (u *ui) searchForHashTags() {
 	cmd.Wait() // ignore error return because we're done
 	if len(results) > 0 {
 		results = util.RemoveDuplicateStrings(results)
-		fynex.ShowListPopUp2(theUI.w.Canvas(), "Find Hashtag", results, func(str string) {
-			theUI.found = find(str)
+		fynex.ShowListPopUp2(theUI.mainWindow.Canvas(), "Find Hashtag", results, func(str string) {
+			theFound = find(str)
 			theUI.postFind(str)
 		})
 	}
@@ -433,29 +491,24 @@ func main() {
 	th := fynex.NewNoteTheme()
 	a.Settings().SetTheme(&th)
 
-	theUI = &ui{w: a.NewWindow(appTitle()), current: makeAndLoadNote(time.Now())}
+	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now()))}
+	theNote = makeAndLoadNote(time.Now())
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
-	ctrlF := &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlF, func(shortcut fyne.Shortcut) {
-		if len(theUI.found) > 0 {
-			theUI.findEx()
-		}
-	})
 	// don't need this: just tap the 'today' icon in the taskbar
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
-	theUI.w.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
-		theUI.saveDirtyNote()
+	theUI.mainWindow.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
+		saveDirtyNote()
 	})
 
-	theUI.w.SetContent(buildUI(theUI))
-	theUI.w.Canvas().Focus(theUI.noteEntry)
-	theUI.noteEntry.SetText(theUI.current.Text)
+	theUI.mainWindow.SetContent(buildUI(theUI))
+	theUI.mainWindow.Canvas().Focus(theUI.noteEntry)
+	theUI.noteEntry.SetText(theNote.Text)
 
-	theUI.w.Resize(fyne.NewSize(float32(windowWidth), float32(windowHeight)))
-	theUI.w.CenterOnScreen()
-	theUI.w.ShowAndRun()
+	theUI.mainWindow.Resize(fyne.NewSize(float32(windowWidth), float32(windowHeight)))
+	theUI.mainWindow.CenterOnScreen()
+	theUI.mainWindow.ShowAndRun()
 
 	// we *do* come here when app quits because window close [x] button pressed
-	theUI.saveDirtyNote()
+	saveDirtyNote()
 }

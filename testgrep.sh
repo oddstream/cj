@@ -1,0 +1,1 @@
+grep --extended-regexp --recursive --ignore-case --files-with-matches dog /home/gilbert/.cj

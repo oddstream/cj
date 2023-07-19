@@ -28,7 +28,7 @@ func newCalendarLayout() fyne.Layout {
 // Get the leading (top or left) edge of a grid cell.
 // size is the ideal cell size and the offset is which col or row its on.
 func (g *calendarLayout) getLeading(offset int) float32 {
-	ret := (g.cellSize) * float32(offset)
+	ret := g.cellSize * float32(offset)
 
 	return float32(math.Round(float64(ret)))
 }
@@ -129,7 +129,8 @@ func (c *Calendar) dateForButton(dayNum int) time.Time {
 }
 
 func (c *Calendar) monthYear() string {
-	return c.currentTime.Format("January 2006")
+	// return c.currentTime.Format("Mon 2 Jan 2006")
+	return c.currentTime.Format("Jan 2006")
 }
 
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {

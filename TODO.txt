@@ -1,12 +1,22 @@
 
 COMMONPLACE JOURNAL TODO
 
+[ ] cj needs some proper refactoring
+
+[X] deprecate putting 'Mon 17 Jul 2023' as the first line of every note
+	by displaying the current date somewhere else, like a pseudo title field
+	put a button widget in the toolbar
+	println(t.Format("Mon 2 Jan 2006"))
+	https://gosamples.dev/date-time-format-cheatsheet/
+	set button text in setCurrent()
+
+[ ] think about using json to store notes
+	hashtag field
+
 [ ] now we use grep for search
 	how about using an external editor?
 	https://micro-editor.github.io/
 	piggyback found words/hashtags on syntax highlighting
-
-[ ] little button to clear the searchEntry
 
 [ ] don't really need to prev/next day toolbar icons
 	could add shortcuts
@@ -114,6 +124,7 @@ COMMONPLACE JOURNAL TODO
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
+[x] little button to clear the searchEntry
 [x] convert all found #hashtags into lower case
 [x] search uses grep; retire search.go to .junk
 [x] com retired to .junk

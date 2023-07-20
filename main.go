@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -56,11 +57,11 @@ func (n *cjNote) daysBetween(m *cjNote) int {
 
 var (
 	theUI          *ui
-	theUserHomeDir string // eg /home/gilbert
-	theDataDir     string // eg .cj
-	theJournalDir  string // eg Default
-	theNote        *cjNote
-	theFound       []*cjNote
+	theUserHomeDir string    // eg /home/gilbert
+	theDataDir     string    // eg .cj
+	theJournalDir  string    // eg Default
+	theNote        *cjNote   // the current note
+	theFound       []*cjNote // the list of found notes
 	debugMode      bool
 )
 
@@ -120,14 +121,19 @@ func parseDateFromFname(pathname string) time.Time {
 	// then remove the suffix to get
 	// 2023/06/10
 	{
+		var t time.Time = time.Time{}
+
 		prefix := path.Join(theUserHomeDir, theDataDir, theJournalDir) + "/"
 		str := strings.TrimPrefix(pathname, prefix)
-		str = strings.TrimSuffix(str, ".txt")
+		ext := filepath.Ext(str) // includes .
+		str = strings.TrimSuffix(str, ext)
 		lst := strings.Split(str, string(os.PathSeparator))
-		y, _ := strconv.Atoi(lst[0])
-		m, _ := strconv.Atoi(lst[1])
-		d, _ := strconv.Atoi(lst[2])
-		t := time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+		if len(lst) == 3 {
+			y, _ := strconv.Atoi(lst[0])
+			m, _ := strconv.Atoi(lst[1])
+			d, _ := strconv.Atoi(lst[2])
+			t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+		}
 		// fmt.Println(pathname, y, m, d)
 		/*
 			psattern := fmt.Sprintf("/%c2006%c01%c02",
@@ -180,10 +186,10 @@ func find(query string) []*cjNote {
 	// /home/gilbert/.cj/Default/2023/06/18.txt
 	// could use ripgrep which is faster
 	cmd := exec.Command("grep",
-		"--extended-regexp",
+		"--fixed-strings", // Interpret PATTERNS as fixed strings, not regular expressions.
 		"--recursive",
 		"--ignore-case",
-		"--files-with-matches",
+		"--files-with-matches", // print the name of each input file from which output would normally have been printed.
 		regexp.QuoteMeta(query),
 		path.Join(theUserHomeDir, theDataDir))
 	stdout, err := cmd.StdoutPipe()
@@ -197,7 +203,9 @@ func find(query string) []*cjNote {
 	stdin := bufio.NewScanner(stdout)
 	for stdin.Scan() {
 		// fmt.Println(stdin.Text())
-		n := makeAndLoadNote(parseDateFromFname(stdin.Text()))
+		n := &cjNote{pathname: stdin.Text()}
+		n.date = parseDateFromFname(n.pathname)
+		n.Load(n.pathname)
 		found = append(found, n)
 	}
 	cmd.Wait() // ignore error return because we're done
@@ -222,8 +230,7 @@ func contains(lst []*cjNote, b *cjNote) bool {
 
 func (u *ui) postFind(query string) {
 	if len(theFound) > 0 {
-		u.searchEntry.Text = query
-		u.searchEntry.Refresh()
+		u.searchEntry.SetText(query)
 
 		u.foundList.Select(0)
 		u.foundList.Refresh()
@@ -354,7 +361,6 @@ func buildUI(u *ui) fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			// println("update widget.ListItemID", id)
 			obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
 		},
 	)
@@ -419,11 +425,12 @@ func (u *ui) promptUserForJournalDir() {
 
 func (u *ui) searchForHashTags() {
 	cmd := exec.Command("grep",
-		"--extended-regexp",
+		"--extended-regexp", // because we are using character class
 		"--recursive",
 		"--ignore-case",
 		"--only-matching",
 		"--no-filename",
+		"-I", // don't process binary files
 		"#[[:alnum:]]+",
 		path.Join(theUserHomeDir, theDataDir))
 	stdout, err := cmd.StdoutPipe()

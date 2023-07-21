@@ -3,6 +3,14 @@ COMMONPLACE JOURNAL TODO
 
 [ ] cj needs some proper refactoring
 
+[ ] title no longer shows name of journal
+	go back to olde style app title
+	put today's date somewhere else
+	make today's name region-sensitive
+
+[ ] experiment with using custom icons in toolbar
+	48 png, ok, svg not drawing, investigate the fyne source
+
 [X] deprecate putting 'Mon 17 Jul 2023' as the first line of every note
 	by displaying the current date somewhere else, like a pseudo title field
 	put a button widget in the toolbar

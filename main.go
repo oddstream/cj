@@ -72,11 +72,12 @@ type ui struct {
 	searchEntry *widget.Entry
 	foundList   *widget.List
 	noteEntry   *widget.Entry
+	theme       fyne.Theme // Theme is an interface
 }
 
 func appTitle(t time.Time) string {
-	// return "Commonplace Journal - " + theJournalDir
-	return t.Format("Mon 2 Jan 2006")
+	return "Commonplace Journal - " + theJournalDir
+	// return t.Format("Mon 2 Jan 2006") + " - " + theJournalDir
 }
 
 func saveDirtyNote() {
@@ -228,18 +229,14 @@ func contains(lst []*cjNote, b *cjNote) bool {
 	return false
 }
 
-func (u *ui) postFind(query string) {
+func (u *ui) postFind() {
 	if len(theFound) > 0 {
-		u.searchEntry.SetText(query)
-
 		u.foundList.Select(0)
-		u.foundList.Refresh()
-
 		u.setCurrent(theFound[0])
 	} else {
 		u.foundList.UnselectAll()
-		u.foundList.Refresh()
 	}
+	u.foundList.Refresh()
 }
 
 func (u *ui) findEx() {
@@ -259,7 +256,7 @@ func (u *ui) findEx() {
 			}
 		}
 		theFound = newFound
-		u.postFind("")
+		u.postFind()
 		pu.Hide()
 	})
 	narrow := widget.NewButton("Narrow", func() {
@@ -274,7 +271,7 @@ func (u *ui) findEx() {
 			}
 		}
 		theFound = newFound
-		u.postFind("")
+		u.postFind()
 		pu.Hide()
 	})
 	exclude := widget.NewButton("Exclude", func() {
@@ -289,7 +286,7 @@ func (u *ui) findEx() {
 			}
 		}
 		theFound = newFound
-		u.postFind("")
+		u.postFind()
 		pu.Hide()
 	})
 	cancel := widget.NewButton("Cancel", func() {
@@ -299,6 +296,7 @@ func (u *ui) findEx() {
 
 	pu = widget.NewModalPopUp(content, u.mainWindow.Canvas())
 	pu.Show()
+	theUI.mainWindow.Canvas().Focus(ent)
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
@@ -307,28 +305,29 @@ func buildUI(u *ui) fyne.CanvasObject {
 		widget.NewToolbarAction(theme.FolderOpenIcon(), func() {
 			u.promptUserForJournalDir()
 		}),
+		// widget.NewToolbarAction(theme.SearchIcon(), func() {
+		widget.NewToolbarAction(u.theme.Icon("tag"), func() {
+			theUI.searchForHashTags()
+		}),
+		widget.NewToolbarAction(theme.SearchIcon(), func() {
+			// if len(theFound) > 0 {
+			theUI.findEx()
+			// }
+		}),
+		widget.NewToolbarSeparator(),
+		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
+			t := theNote.date
+			t = t.Add(-time.Hour * 24)
+			calendarTapped(t)
+		}),
 		widget.NewToolbarAction(theme.HomeIcon(), func() {
 			calendarTapped(time.Now())
 		}),
-		widget.NewToolbarAction(theme.SearchIcon(), func() {
-			theUI.searchForHashTags()
+		widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
+			t := theNote.date
+			t = t.Add(time.Hour * 24)
+			calendarTapped(t)
 		}),
-		widget.NewToolbarAction(theme.StorageIcon(), func() {
-			if len(theFound) > 0 {
-				theUI.findEx()
-			}
-		}),
-		// widget.NewToolbarSeparator(),
-		// widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
-		// 	t := theUI.current.date
-		// 	t = t.Add(-time.Hour * 24)
-		// 	calendarTapped(t)
-		// }),
-		// widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
-		// 	t := theUI.current.date
-		// 	t = t.Add(time.Hour * 24)
-		// 	calendarTapped(t)
-		// }),
 	)
 
 	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theNote.date, calendarTapped, calendarIsDateImportant))
@@ -454,7 +453,7 @@ func (u *ui) searchForHashTags() {
 		results = util.RemoveDuplicateStrings(results)
 		fynex.ShowListPopUp2(theUI.mainWindow.Canvas(), "Find Hashtag", results, func(str string) {
 			theFound = find(str)
-			theUI.postFind(str)
+			theUI.postFind()
 		})
 	}
 }
@@ -495,10 +494,11 @@ func main() {
 		StaticContent: todayIconBytes,
 	})
 
-	th := fynex.NewNoteTheme()
-	a.Settings().SetTheme(&th)
+	// theTheme := fynex.NewNoteTheme()
+	// a.Settings().SetTheme(&theTheme)
 
-	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now()))}
+	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now())), theme: fynex.NewNoteTheme()}
+	a.Settings().SetTheme(theUI.theme)
 	theNote = makeAndLoadNote(time.Now())
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget

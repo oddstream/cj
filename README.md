@@ -67,6 +67,71 @@ cd ~
 zip -r $filename .cj
 ```
 
+## Exporting notes to text and markdown files
+
+You can use a script to create a single text file from all the data files, like so:
+
+```bash
+cd ~/.cj/Default
+
+find . -type f -name "*.txt" | sort | while read file; do
+  echo ""
+  echo $file
+  cat $file
+done
+```
+
+Send the output of this script into a text file, like so:
+
+```bash
+./export.sh > exported
+```
+
+The output of this contains the reletive filename of each day's file, which doesn't look great. So, I use a little `gawk` script to clean the file up, and make it a little more markdown-flavored:
+
+```awk
+#!/usr/bin/gawk -f
+
+# note breaks are prefixed with the filename, which looks like "./2023/07/22.txt"
+# we have to parse this into three numbers (y m d) using patsplit()
+# then convert those three numbers into a systime using mktime()
+# so we can format the date however we like using strftime()
+# https://www.gnu.org/software/gawk/manual/html_node/Time-Functions.html
+
+BEGIN {
+    dateLinePattern = "^./[0-9]+/[0-9]+/[0-9]+.txt$"
+    FS = "\n"
+    prevYear = 1962
+    prevMonth = 4
+}
+
+{
+	if ($0 ~ dateLinePattern) {
+		patsplit($0, d, "[0-9]+")
+		sysTime = mktime(d[1] " " d[2] " " d[3] " 0 0 0")
+
+		if (d[1] != prevYear) {
+			print "\n# " strftime("%Y", sysTime)
+			prevYear = d[1]
+		}
+		if (d[2] != prevMonth) {
+			print "\n## " strftime("%B", sysTime)
+			prevMonth = d[2]
+		}
+
+		print "\n### " strftime("%A %d %B %Y", sysTime) " \n"
+	} else {
+		print
+	}
+}
+```
+
+Send the output of this script into a markdown file, like so:
+
+```bash
+gawk reformat.awk -f exported > exported.md
+```
+
 No tricksy or closed file formats here, no sir.
 
 ## Command line flags

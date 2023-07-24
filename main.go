@@ -214,12 +214,6 @@ func find(query string) []*cjNote {
 	return found
 }
 
-func listSelected(id widget.ListItemID) {
-	// log.Printf("list item %d selected", id)
-	saveDirtyNote()
-	theUI.setCurrent(theFound[id])
-}
-
 func contains(lst []*cjNote, b *cjNote) bool {
 	for _, n := range lst {
 		if n.daysBetween(b) == 0 {
@@ -296,7 +290,7 @@ func (u *ui) findEx() {
 
 	pu = widget.NewModalPopUp(content, u.mainWindow.Canvas())
 	pu.Show()
-	theUI.mainWindow.Canvas().Focus(ent)
+	pu.Canvas.Focus(ent)
 }
 
 func buildUI(u *ui) fyne.CanvasObject {
@@ -360,10 +354,14 @@ func buildUI(u *ui) fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
+			// obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
+			obj.(*widget.Label).SetText(theFound[id].date.Format("Mon 2 Jan 2006"))
 		},
 	)
-	u.foundList.OnSelected = listSelected
+	u.foundList.OnSelected = func(id widget.ListItemID) {
+		saveDirtyNote()
+		theUI.setCurrent(theFound[id])
+	}
 
 	u.noteEntry = widget.NewMultiLineEntry()
 	u.noteEntry.TextStyle = fyne.TextStyle{Monospace: true}

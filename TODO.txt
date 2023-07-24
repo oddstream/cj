@@ -3,6 +3,13 @@ COMMONPLACE JOURNAL TODO
 
 [ ] cj needs some proper refactoring
 
+[ ] maybe found list should show dates, instead of first lines?
+	or somehow manage to show line where hit words are
+
+[ ] get rid of widen/narrow/exclude popup?
+	parse or and not in searchEntry (these would be stopwords)
+	ooo that's clever
+
 [ ] title no longer shows name of journal
 	go back to olde style app title
 	put today's date somewhere else

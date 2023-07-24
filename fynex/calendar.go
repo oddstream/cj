@@ -129,7 +129,6 @@ func (c *Calendar) dateForButton(dayNum int) time.Time {
 }
 
 func (c *Calendar) monthYear() string {
-	// return c.currentTime.Format("Mon 2 Jan 2006")
 	return c.currentTime.Format("Jan 2006")
 }
 

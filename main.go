@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -211,6 +212,10 @@ func find(query string) []*cjNote {
 	}
 	cmd.Wait() // ignore error return because we're done
 
+	sort.Slice(found, func(i, j int) bool {
+		return found[i].date.Before(found[j].date)
+	})
+
 	return found
 }
 
@@ -344,6 +349,9 @@ func buildUI(u *ui) fyne.CanvasObject {
 	searchEntryClear := widget.NewButtonWithIcon("", theme.ContentClearIcon(), func() {
 		u.searchEntry.SetText("")
 		theUI.mainWindow.Canvas().Focus(theUI.searchEntry)
+		theFound = []*cjNote{}
+		u.foundList.UnselectAll()
+		u.foundList.Refresh()
 	})
 
 	u.foundList = widget.NewList(
@@ -448,7 +456,7 @@ func (u *ui) searchForHashTags() {
 	}
 	cmd.Wait() // ignore error return because we're done
 	if len(results) > 0 {
-		results = util.RemoveDuplicateStrings(results)
+		results = util.RemoveDuplicateStrings(results) // sorts slice as a side-effect
 		fynex.ShowListPopUp2(theUI.mainWindow.Canvas(), "Find Hashtag", results, func(str string) {
 			theFound = find(str)
 			theUI.postFind()

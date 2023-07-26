@@ -148,7 +148,7 @@ No tricksy or closed file formats here, no sir.
 
 ## TODO
 
-- Better text editor (including spellchecking, found word highlighting, follow hyperlink, more visible caret, keyboard shortcuts for move word/delete line/goto start/goto end)
+- Better text editor (including spellchecking, found word highlighting, follow hyperlink, more visible caret, keyboard shortcuts for move word/delete line/goto start/goto end, Unicode support Unicode Character “𝕏” (U+1D54F))
 - Support for moving text from `cj` to a markdown editor, to facilitate short term to long term note workflow; maybe right-click popup 'copy selected text to commonplace book' ...
 - More support for hashtags (eg tap on a hashtag to find notes containing it, insert hashtag from dict)
 - Support for creating backups, or git, or cloud (Fyne has some cloud support)

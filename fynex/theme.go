@@ -13,6 +13,10 @@ import (
 // https://www.iconsdb.com/white-icons/
 // https://www.iconsdb.com/white-icons/white-tag-icons.html
 //
+
+//go:embed "icons/external-link-48.png"
+var linkIconBytes []byte
+
 //go:embed "icons/tag-5-48.png"
 var tagIconBytes []byte
 
@@ -54,6 +58,10 @@ func NewNoteTheme() *NoteTheme {
 	// caret visibility https://github.com/fyne-io/fyne/issues/4063
 
 	nt.icons = make(map[fyne.ThemeIconName]fyne.Resource)
+	nt.icons["link"] = &fyne.StaticResource{
+		StaticName:    "link.png",
+		StaticContent: linkIconBytes,
+	}
 	nt.icons["tag"] = &fyne.StaticResource{
 		StaticName:    "tag.png",
 		StaticContent: tagIconBytes,

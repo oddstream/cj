@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -188,11 +188,13 @@ func find(query string) []*cjNote {
 	// /home/gilbert/.cj/Default/2023/06/18.txt
 	// could use ripgrep which is faster
 	cmd := exec.Command("grep",
-		"--fixed-strings", // Interpret PATTERNS as fixed strings, not regular expressions.
+		"--fixed-strings", // interpret PATTERNS as fixed strings, not regular expressions.
 		"--recursive",
 		"--ignore-case",
 		"--files-with-matches", // print the name of each input file from which output would normally have been printed.
-		regexp.QuoteMeta(query),
+		// regexp.QuoteMeta(query), // don't quote meta if using --fixed-strings
+		"-I", // don't process binary files
+		query,
 		path.Join(theUserHomeDir, theDataDir))
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -312,6 +314,13 @@ func buildUI(u *ui) fyne.CanvasObject {
 			// if len(theFound) > 0 {
 			theUI.findEx()
 			// }
+		}),
+		widget.NewToolbarAction(u.theme.Icon("link"), func() {
+			if str := theUI.noteEntry.SelectedText(); str != "" {
+				if err := link(str); err != nil {
+					dialog.ShowError(err, theUI.mainWindow)
+				}
+			}
 		}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {

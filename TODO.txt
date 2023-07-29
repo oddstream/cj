@@ -3,7 +3,20 @@ COMMONPLACE JOURNAL TODO
 
 [ ] cj needs some proper refactoring
 
-[ ] maybe found list should show dates, instead of first lines?
+[X] func (e *Entry) SelectedText() string
+	link toolbar icon (no builtin)
+	launch in browser
+
+[-] find the bit of code in widget.Entry that puts text onto the screen
+	and add a hook that allows highlighting
+
+[ ] redo in Gtk
+	use https://wiki.gnome.org/Projects/GtkSourceView
+	or https://codebrainz.github.io/GtkScintilla/
+
+[ ] ReadStuffLater uses emojis to tag content.
+
+[X] maybe found list should show dates, instead of first lines?
 	or somehow manage to show line where hit words are
 
 [ ] get rid of widen/narrow/exclude popup?

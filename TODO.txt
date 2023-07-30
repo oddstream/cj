@@ -1,6 +1,10 @@
 
 COMMONPLACE JOURNAL TODO
 
+[ ] do something with Mon 1 Jan 0001
+
+[X] filter out files that start with '.'
+
 [ ] cj needs some proper refactoring
 
 [X] func (e *Entry) SelectedText() string

@@ -123,7 +123,7 @@ func parseDateFromFname(pathname string) time.Time {
 	// then remove the suffix to get
 	// 2023/06/10
 	{
-		var t time.Time = time.Time{}
+		var t time.Time = time.Time{} // Mon 1 Jan 0001
 
 		prefix := path.Join(theUserHomeDir, theDataDir, theJournalDir) + "/"
 		str := strings.TrimPrefix(pathname, prefix)
@@ -187,15 +187,17 @@ func find(query string) []*cjNote {
 	// /home/gilbert/.cj/Default/2023/07/04.txt
 	// /home/gilbert/.cj/Default/2023/06/18.txt
 	// could use ripgrep which is faster
+	// fmt.Println(path.Join(theUserHomeDir, theDataDir, theJournalDir))
 	cmd := exec.Command("grep",
 		"--fixed-strings", // interpret PATTERNS as fixed strings, not regular expressions.
 		"--recursive",
 		"--ignore-case",
 		"--files-with-matches", // print the name of each input file from which output would normally have been printed.
 		// regexp.QuoteMeta(query), // don't quote meta if using --fixed-strings
-		"-I", // don't process binary files
+		"-I",                 // don't process binary files
+		"--exclude-dir='.*'", // exclude hidden directories
 		query,
-		path.Join(theUserHomeDir, theDataDir))
+		path.Join(theUserHomeDir, theDataDir, theJournalDir))
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -206,12 +208,17 @@ func find(query string) []*cjNote {
 	}
 	stdin := bufio.NewScanner(stdout)
 	for stdin.Scan() {
-		// fmt.Println(stdin.Text())
-		n := &cjNote{pathname: stdin.Text()}
-		n.date = parseDateFromFname(n.pathname)
-		n.Load(n.pathname)
+		pathname := stdin.Text()
+		// fmt.Println(pathname)
+		if strings.HasPrefix(pathname, ".") {
+			continue
+		}
+		n := &cjNote{pathname: pathname}
+		n.date = parseDateFromFname(pathname)
+		n.Load(pathname)
 		found = append(found, n)
 	}
+	// fmt.Println("-----")
 	cmd.Wait() // ignore error return because we're done
 
 	sort.Slice(found, func(i, j int) bool {
@@ -444,9 +451,10 @@ func (u *ui) searchForHashTags() {
 		"--ignore-case",
 		"--only-matching",
 		"--no-filename",
-		"-I", // don't process binary files
+		"-I",                 // don't process binary files
+		"--exclude-dir='.*'", // exclude hidden directories
 		"#[[:alnum:]]+",
-		path.Join(theUserHomeDir, theDataDir))
+		path.Join(theUserHomeDir, theDataDir, theJournalDir))
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)

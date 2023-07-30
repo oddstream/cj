@@ -1,7 +1,7 @@
 
 COMMONPLACE JOURNAL TODO
 
-[ ] do something with Mon 1 Jan 0001
+[X] do something with Mon 1 Jan 0001
 
 [X] filter out files that start with '.'
 

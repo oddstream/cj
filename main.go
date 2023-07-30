@@ -378,8 +378,12 @@ func buildUI(u *ui) fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			// obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
-			obj.(*widget.Label).SetText(theFound[id].date.Format("Mon 2 Jan 2006"))
+			if theFound[id].date.Year() == 1 {
+				obj.(*widget.Label).SetText(theFound[id].pathname)
+			} else {
+				// obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
+				obj.(*widget.Label).SetText(theFound[id].date.Format("Mon 2 Jan 2006"))
+			}
 		},
 	)
 	u.foundList.OnSelected = func(id widget.ListItemID) {

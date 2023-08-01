@@ -38,17 +38,15 @@ const (
 
 type cjNote struct {
 	note.Note
-	date     time.Time
-	pathname string
+	date time.Time
 }
 
-func makeAndLoadNote(date time.Time) *cjNote {
+func newNote(date time.Time) *cjNote {
 	n := &cjNote{date: date}
-	n.pathname = path.Join(theUserHomeDir, theDataDir, theJournalDir,
+	n.Pathname = path.Join(theUserHomeDir, theDataDir, theJournalDir,
 		fmt.Sprintf("%04d", n.date.Year()),
 		fmt.Sprintf("%02d", n.date.Month()),
 		fmt.Sprintf("%02d.txt", n.date.Day()))
-	n.Load(n.pathname)
 	return n
 }
 
@@ -85,24 +83,31 @@ func saveDirtyNote() {
 	newText := theUI.noteEntry.Text
 	if newText != theNote.Text {
 		if util.IsStringEmpty(newText) {
-			theNote.Remove(theNote.pathname)
+			theNote.Remove()
 		} else {
 			theNote.Text = newText
-			theNote.Save(theNote.pathname)
+			theNote.Save()
 		}
 	}
 }
 
-func (u *ui) setCurrent(n *cjNote) {
-	theNote = n
+func (u *ui) displayText() {
+	if len(theNote.Text) == 0 {
+		theNote.Load()
+	}
 	u.noteEntry.SetText(theNote.Text)
+}
+
+func (u *ui) setCurrentNote(n *cjNote) {
+	theNote = n
+	u.displayText()
 	u.calendar.Objects[0] = fynex.NewCalendar(theNote.date, calendarTapped, calendarIsDateImportant)
 	u.mainWindow.SetTitle(appTitle(n.date))
 }
 
 func calendarTapped(t time.Time) {
 	saveDirtyNote()
-	theUI.setCurrent(makeAndLoadNote(t))
+	theUI.setCurrentNote(newNote(t))
 	theUI.foundList.UnselectAll()
 	theUI.mainWindow.Canvas().Focus(theUI.noteEntry)
 }
@@ -213,9 +218,9 @@ func find(query string) []*cjNote {
 		if strings.HasPrefix(pathname, ".") {
 			continue
 		}
-		n := &cjNote{pathname: pathname}
+		n := new(cjNote)
+		n.Pathname = pathname
 		n.date = parseDateFromFname(pathname)
-		n.Load(pathname)
 		found = append(found, n)
 	}
 	// fmt.Println("-----")
@@ -240,7 +245,7 @@ func contains(lst []*cjNote, b *cjNote) bool {
 func (u *ui) postFind() {
 	if len(theFound) > 0 {
 		u.foundList.Select(0)
-		u.setCurrent(theFound[0])
+		u.setCurrentNote(theFound[0])
 	} else {
 		u.foundList.UnselectAll()
 	}
@@ -379,16 +384,17 @@ func buildUI(u *ui) fyne.CanvasObject {
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			if theFound[id].date.Year() == 1 {
-				obj.(*widget.Label).SetText(theFound[id].pathname)
+				// no date shows as Mon 1 Jan 0001
+				obj.(*widget.Label).SetText(theFound[id].Pathname)
 			} else {
-				// obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
 				obj.(*widget.Label).SetText(theFound[id].date.Format("Mon 2 Jan 2006"))
 			}
+			// obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
 		},
 	)
 	u.foundList.OnSelected = func(id widget.ListItemID) {
 		saveDirtyNote()
-		theUI.setCurrent(theFound[id])
+		theUI.setCurrentNote(theFound[id])
 	}
 
 	u.noteEntry = widget.NewMultiLineEntry()
@@ -526,7 +532,7 @@ func main() {
 
 	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now())), theme: fynex.NewNoteTheme()}
 	a.Settings().SetTheme(theUI.theme)
-	theNote = makeAndLoadNote(time.Now())
+	theNote = newNote(time.Now())
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
 	// don't need this: just tap the 'today' icon in the taskbar
@@ -537,7 +543,7 @@ func main() {
 
 	theUI.mainWindow.SetContent(buildUI(theUI))
 	theUI.mainWindow.Canvas().Focus(theUI.noteEntry)
-	theUI.noteEntry.SetText(theNote.Text)
+	theUI.displayText()
 
 	theUI.mainWindow.Resize(fyne.NewSize(float32(windowWidth), float32(windowHeight)))
 	theUI.mainWindow.CenterOnScreen()

@@ -1,10 +1,6 @@
 
 COMMONPLACE JOURNAL TODO
 
-[X] do something with Mon 1 Jan 0001
-
-[X] filter out files that start with '.'
-
 [ ] cj needs some proper refactoring
 
 [X] func (e *Entry) SelectedText() string
@@ -155,6 +151,11 @@ COMMONPLACE JOURNAL TODO
 	according to strace
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
+
+[X] Move cjNote.pathname to Note.Pathname
+[X] why load the text off all notes?
+[X] do something with Mon 1 Jan 0001
+[X] filter out files that start with '.'
 
 [x] little button to clear the searchEntry
 [x] convert all found #hashtags into lower case

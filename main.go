@@ -65,7 +65,7 @@ var (
 )
 
 type ui struct {
-	mainWindow  fyne.Window
+	mainWindow  fyne.Window // Window is an interface
 	toolbar     *widget.Toolbar
 	calendar    *fyne.Container //*Calendar
 	searchEntry *widget.Entry
@@ -193,7 +193,7 @@ func find(query string) []*cjNote {
 	// /home/gilbert/.cj/Default/2023/06/18.txt
 	// could use ripgrep which is faster
 	// fmt.Println(path.Join(theUserHomeDir, theDataDir, theJournalDir))
-	cmd := exec.Command("grep",
+	cmd := exec.Command("grep", // becomes /usr/bin/grep
 		"--fixed-strings", // interpret PATTERNS as fixed strings, not regular expressions.
 		"--recursive",
 		"--ignore-case",
@@ -201,8 +201,10 @@ func find(query string) []*cjNote {
 		// regexp.QuoteMeta(query), // don't quote meta if using --fixed-strings
 		"-I",                 // don't process binary files
 		"--exclude-dir='.*'", // exclude hidden directories
-		query,
+		query,                // don't surround with quotes or double quotes
 		path.Join(theUserHomeDir, theDataDir, theJournalDir))
+	// fmt.Println(cmd.Path)
+	// fmt.Println(cmd.Args)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -254,59 +256,83 @@ func (u *ui) postFind() {
 
 func (u *ui) findEx() {
 	var pu *widget.PopUp
+	var bfind, bwiden, bnarrow, bexclude, bcancel *widget.Button
 
 	ent := widget.NewEntry()
 	ent.PlaceHolder = "Search"
-	widen := widget.NewButton("Widen", func() {
-		results := find(ent.Text)
-		if len(results) == 0 {
-			return
-		}
-		var newFound []*cjNote = theFound
-		for _, n := range results {
-			if !contains(theFound, n) {
-				newFound = append(newFound, n)
+	if len(theFound) == 0 {
+		bfind = widget.NewButton("Find", func() {
+			results := find(ent.Text)
+			if len(results) == 0 {
+				return
 			}
-		}
-		theFound = newFound
-		u.postFind()
-		pu.Hide()
-	})
-	narrow := widget.NewButton("Narrow", func() {
-		results := find(ent.Text)
-		if len(results) == 0 {
-			return
-		}
-		var newFound []*cjNote
-		for _, n := range results {
-			if contains(theFound, n) {
-				newFound = append(newFound, n)
+			var newFound []*cjNote = theFound
+			for _, n := range results {
+				if !contains(theFound, n) {
+					newFound = append(newFound, n)
+				}
 			}
-		}
-		theFound = newFound
-		u.postFind()
-		pu.Hide()
-	})
-	exclude := widget.NewButton("Exclude", func() {
-		results := find(ent.Text)
-		if len(results) == 0 {
-			return
-		}
-		var newFound []*cjNote
-		for _, n := range results {
-			if !contains(theFound, n) {
-				newFound = append(newFound, n)
+			theFound = newFound
+			u.postFind()
+			pu.Hide()
+		})
+	} else {
+		bwiden = widget.NewButton("Widen", func() {
+			results := find(ent.Text)
+			if len(results) == 0 {
+				return
 			}
-		}
-		theFound = newFound
-		u.postFind()
+			var newFound []*cjNote = theFound
+			for _, n := range results {
+				if !contains(theFound, n) {
+					newFound = append(newFound, n)
+				}
+			}
+			theFound = newFound
+			u.postFind()
+			pu.Hide()
+		})
+		bnarrow = widget.NewButton("Narrow", func() {
+			results := find(ent.Text)
+			if len(results) == 0 {
+				return
+			}
+			var newFound []*cjNote
+			for _, n := range results {
+				if contains(theFound, n) {
+					newFound = append(newFound, n)
+				}
+			}
+			theFound = newFound
+			u.postFind()
+			pu.Hide()
+		})
+		bexclude = widget.NewButton("Exclude", func() {
+			results := find(ent.Text)
+			if len(results) == 0 {
+				return
+			}
+			var newFound []*cjNote
+			for _, n := range results {
+				if !contains(theFound, n) {
+					newFound = append(newFound, n)
+				}
+			}
+			theFound = newFound
+			u.postFind()
+			pu.Hide()
+		})
+	}
+	bcancel = widget.NewButton("Cancel", func() {
 		pu.Hide()
 	})
-	cancel := widget.NewButton("Cancel", func() {
-		pu.Hide()
-	})
-	content := container.New(layout.NewVBoxLayout(), ent, widen, narrow, exclude, cancel)
-
+	var buttons *fyne.Container
+	if bfind != nil {
+		buttons = container.New(layout.NewHBoxLayout(), bfind, bcancel)
+	} else {
+		buttons = container.New(layout.NewHBoxLayout(), bwiden, bnarrow, bexclude, bcancel)
+	}
+	content := container.New(layout.NewVBoxLayout(), ent, buttons)
 	pu = widget.NewModalPopUp(content, u.mainWindow.Canvas())
 	pu.Show()
 	pu.Canvas.Focus(ent)

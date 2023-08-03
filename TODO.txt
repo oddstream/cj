@@ -3,6 +3,10 @@ COMMONPLACE JOURNAL TODO
 
 [ ] cj needs some proper refactoring
 
+[ ] https://github.com/aarzilli/nucular
+	can set style in RichText widget, eg
+	c.SetStyleForSel(findSel(bigEnchillada, "it's a false hologram, it is artificial"), richtext.TextStyle{Face: italic})
+
 [X] func (e *Entry) SelectedText() string
 	link toolbar icon (no builtin)
 	launch in browser
@@ -10,18 +14,29 @@ COMMONPLACE JOURNAL TODO
 [-] find the bit of code in widget.Entry that puts text onto the screen
 	and add a hook that allows highlighting
 
-[ ] redo in Gtk
+[-] redo in Gtk
 	use https://wiki.gnome.org/Projects/GtkSourceView
 	or https://codebrainz.github.io/GtkScintilla/
+	too complicated
 
-[ ] ReadStuffLater uses emojis to tag content.
+[ ] ReadStuffLater uses emojis to tag content
 
 [X] maybe found list should show dates, instead of first lines?
 	or somehow manage to show line where hit words are
 
 [ ] get rid of widen/narrow/exclude popup?
-	parse or and not in searchEntry (these would be stopwords)
-	ooo that's clever
+	parse "or" "and" "not" in searchEntry (these would be stopwords anyway)
+	strictly left to right, no parentheses
+	would it be tricky to do as it's typed?
+	dog
+	dog food
+	dog or cat
+	dog food or cat food not grapes
+		find "dog food"
+		push or
+		find "cat food"
+		push not
+	...problem using ' or " around query string to find phrases
 
 [ ] title no longer shows name of journal
 	go back to olde style app title

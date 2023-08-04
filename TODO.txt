@@ -38,6 +38,10 @@ COMMONPLACE JOURNAL TODO
 		push not
 	...problem using ' or " around query string to find phrases
 
+[ ] grep alternatives
+	https://sift-tool.org/docs
+	https://github.com/BurntSushi/ripgrep
+
 [ ] title no longer shows name of journal
 	go back to olde style app title
 	put today's date somewhere else

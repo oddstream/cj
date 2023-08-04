@@ -1,9 +1,7 @@
 package util
 
 import (
-	"bufio"
 	"sort"
-	"strings"
 	"unicode"
 )
 
@@ -23,17 +21,17 @@ import (
 // 	return s
 // }
 
-func FirstLine(text string) string {
-	var line string
-	scanner := bufio.NewScanner(strings.NewReader(text))
-	for scanner.Scan() {
-		line = scanner.Text()
-		if len(line) > 0 {
-			break
-		}
-	}
-	return line
-}
+// func FirstLine(text string) string {
+// 	var line string
+// 	scanner := bufio.NewScanner(strings.NewReader(text))
+// 	for scanner.Scan() {
+// 		line = scanner.Text()
+// 		if len(line) > 0 {
+// 			break
+// 		}
+// 	}
+// 	return line
+// }
 
 func IsStringEmpty(str string) bool {
 	for _, r := range str {

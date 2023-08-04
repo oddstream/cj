@@ -1,14 +1,48 @@
 package note
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
+	"oddstream.cj/util"
 )
 
 type Note struct {
-	Text     string // the text of the note, when loaded
+	Text     string
 	Pathname string
+	Date     time.Time
+}
+
+func NewNote(home, data, journal string, obj any) *Note {
+	n := &Note{}
+	switch v := obj.(type) {
+	case string:
+		n.Pathname = v
+		prefix := path.Join(home, data, journal) + "/"
+		str := strings.TrimPrefix(v, prefix)
+		ext := filepath.Ext(str) // includes .
+		str = strings.TrimSuffix(str, ext)
+		lst := strings.Split(str, string(os.PathSeparator))
+		if len(lst) == 3 {
+			y, _ := strconv.Atoi(lst[0])
+			m, _ := strconv.Atoi(lst[1])
+			d, _ := strconv.Atoi(lst[2])
+			n.Date = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
+		}
+	case time.Time:
+		n.Date = v
+		n.Pathname = path.Join(home, data, journal,
+			fmt.Sprintf("%04d", v.Year()),
+			fmt.Sprintf("%02d", v.Month()),
+			fmt.Sprintf("%02d.txt", v.Day()))
+	}
+	return n
 }
 
 func (n *Note) Load() {
@@ -35,6 +69,17 @@ func (n *Note) Save() {
 	}
 	if err = file.Close(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func (n *Note) SaveIfDirty(newText string) {
+	if newText != n.Text {
+		if util.IsStringEmpty(newText) {
+			n.Remove()
+		} else {
+			n.Text = newText
+			n.Save()
+		}
 	}
 }
 

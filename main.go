@@ -9,9 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -36,31 +34,13 @@ const (
 	appVersion = "0.1"
 )
 
-type cjNote struct {
-	note.Note
-	date time.Time
-}
-
-func newNote(date time.Time) *cjNote {
-	n := &cjNote{date: date}
-	n.Pathname = path.Join(theUserHomeDir, theDataDir, theJournalDir,
-		fmt.Sprintf("%04d", n.date.Year()),
-		fmt.Sprintf("%02d", n.date.Month()),
-		fmt.Sprintf("%02d.txt", n.date.Day()))
-	return n
-}
-
-func (n *cjNote) daysBetween(m *cjNote) int {
-	return int(n.date.Sub(m.date).Hours() / 24)
-}
-
 var (
 	theUI          *ui
-	theUserHomeDir string    // eg /home/gilbert
-	theDataDir     string    // eg .cj
-	theJournalDir  string    // eg Default
-	theNote        *cjNote   // the current note
-	theFound       []*cjNote // the list of found notes
+	theUserHomeDir string       // eg /home/gilbert
+	theDataDir     string       // eg .cj
+	theJournalDir  string       // eg Default
+	theNote        *note.Note   // the current note
+	theFound       []*note.Note // the list of found notes
 	debugMode      bool
 )
 
@@ -79,18 +59,6 @@ func appTitle(t time.Time) string {
 	// return t.Format("Mon 2 Jan 2006") + " - " + theJournalDir
 }
 
-func saveDirtyNote() {
-	newText := theUI.noteEntry.Text
-	if newText != theNote.Text {
-		if util.IsStringEmpty(newText) {
-			theNote.Remove()
-		} else {
-			theNote.Text = newText
-			theNote.Save()
-		}
-	}
-}
-
 func (u *ui) displayText() {
 	if len(theNote.Text) == 0 {
 		theNote.Load()
@@ -98,90 +66,28 @@ func (u *ui) displayText() {
 	u.noteEntry.SetText(theNote.Text)
 }
 
-func (u *ui) setCurrentNote(n *cjNote) {
+func (u *ui) setCurrentNote(n *note.Note) {
 	theNote = n
 	u.displayText()
-	u.calendar.Objects[0] = fynex.NewCalendar(theNote.date, calendarTapped, calendarIsDateImportant)
-	u.mainWindow.SetTitle(appTitle(n.date))
+	u.calendar.Objects[0] = fynex.NewCalendar(theNote.Date, calendarTapped, calendarIsDateImportant)
+	u.mainWindow.SetTitle(appTitle(n.Date))
 }
 
 func calendarTapped(t time.Time) {
-	saveDirtyNote()
-	theUI.setCurrentNote(newNote(t))
+	theNote.SaveIfDirty(theUI.noteEntry.Text)
+	theUI.setCurrentNote(note.NewNote(theUserHomeDir, theDataDir, theJournalDir, t))
 	theUI.foundList.UnselectAll()
 	theUI.mainWindow.Canvas().Focus(theUI.noteEntry)
 }
 
 func calendarIsDateImportant(t time.Time) bool {
-	return t.Year() == theNote.date.Year() &&
-		t.Month() == theNote.date.Month() &&
-		t.Day() == theNote.date.Day()
+	return t.Year() == theNote.Date.Year() &&
+		t.Month() == theNote.Date.Month() &&
+		t.Day() == theNote.Date.Day()
 }
 
-func parseDateFromFname(pathname string) time.Time {
-	// TODO this is as ugly as fuck and needs reworking
-	// pathname comes from the output of grep, and looks like
-	// /home/gilbert/.cj/Default/2023/06/10.txt
-	// so we know in advance what the prefix of the pathname is,
-	// so remove it to get
-	// 2023/06/10.txt
-	// then remove the suffix to get
-	// 2023/06/10
-	{
-		var t time.Time = time.Time{} // Mon 1 Jan 0001
-
-		prefix := path.Join(theUserHomeDir, theDataDir, theJournalDir) + "/"
-		str := strings.TrimPrefix(pathname, prefix)
-		ext := filepath.Ext(str) // includes .
-		str = strings.TrimSuffix(str, ext)
-		lst := strings.Split(str, string(os.PathSeparator))
-		if len(lst) == 3 {
-			y, _ := strconv.Atoi(lst[0])
-			m, _ := strconv.Atoi(lst[1])
-			d, _ := strconv.Atoi(lst[2])
-			t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
-		}
-		// fmt.Println(pathname, y, m, d)
-		/*
-			psattern := fmt.Sprintf("/%c2006%c01%c02",
-				os.PathSeparator,
-				os.PathSeparator,
-				os.PathSeparator)
-			// fmt.Println(t)
-			t2, err := time.Parse(psattern, str)
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(t2)
-			}
-		*/
-		return t
-	}
-	/*
-	   var t = time.Time{}
-	   lst := strings.Split(pathname, string(os.PathSeparator))
-
-	   	for i := 0; i < len(lst)-3; i++ {
-	   		if lst[i] == theJournalDir {
-	   			if y, err := strconv.Atoi(lst[i+1]); err == nil {
-	   				if m, err := strconv.Atoi(lst[i+2]); err == nil {
-	   					if f, _, ok := strings.Cut(lst[i+3], "."); ok {
-	   						if d, err := strconv.Atoi(f); err == nil {
-	   							t = time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.Local)
-	   							break
-	   						}
-	   					}
-	   				}
-	   			}
-	   		}
-	   	}
-
-	   return t
-	*/
-}
-
-func find(query string) []*cjNote {
-	var found []*cjNote
+func find(query string) []*note.Note {
+	var found []*note.Note
 
 	if query == "" {
 		return found
@@ -220,24 +126,26 @@ func find(query string) []*cjNote {
 		if strings.HasPrefix(pathname, ".") {
 			continue
 		}
-		n := new(cjNote)
-		n.Pathname = pathname
-		n.date = parseDateFromFname(pathname)
+		n := note.NewNote(theUserHomeDir, theDataDir, theJournalDir, pathname)
 		found = append(found, n)
 	}
 	// fmt.Println("-----")
 	cmd.Wait() // ignore error return because we're done
 
 	sort.Slice(found, func(i, j int) bool {
-		return found[i].date.Before(found[j].date)
+		return found[i].Date.Before(found[j].Date)
 	})
 
 	return found
 }
 
-func contains(lst []*cjNote, b *cjNote) bool {
-	for _, n := range lst {
-		if n.daysBetween(b) == 0 {
+func daysBetween(m *note.Note, n *note.Note) int {
+	return int(n.Date.Sub(m.Date).Hours() / 24)
+}
+
+func contains(lst []*note.Note, b *note.Note) bool {
+	for _, a := range lst {
+		if daysBetween(a, b) == 0 {
 			return true
 		}
 	}
@@ -266,7 +174,7 @@ func (u *ui) findEx() {
 			if len(results) == 0 {
 				return
 			}
-			var newFound []*cjNote = theFound
+			var newFound []*note.Note = theFound
 			for _, n := range results {
 				if !contains(theFound, n) {
 					newFound = append(newFound, n)
@@ -282,7 +190,7 @@ func (u *ui) findEx() {
 			if len(results) == 0 {
 				return
 			}
-			var newFound []*cjNote = theFound
+			var newFound []*note.Note = theFound
 			for _, n := range results {
 				if !contains(theFound, n) {
 					newFound = append(newFound, n)
@@ -297,7 +205,7 @@ func (u *ui) findEx() {
 			if len(results) == 0 {
 				return
 			}
-			var newFound []*cjNote
+			var newFound []*note.Note
 			for _, n := range results {
 				if contains(theFound, n) {
 					newFound = append(newFound, n)
@@ -312,7 +220,7 @@ func (u *ui) findEx() {
 			if len(results) == 0 {
 				return
 			}
-			var newFound []*cjNote
+			var newFound []*note.Note
 			for _, n := range results {
 				if !contains(theFound, n) {
 					newFound = append(newFound, n)
@@ -362,7 +270,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 		}),
 		widget.NewToolbarSeparator(),
 		widget.NewToolbarAction(theme.NavigateBackIcon(), func() {
-			t := theNote.date
+			t := theNote.Date
 			t = t.Add(-time.Hour * 24)
 			calendarTapped(t)
 		}),
@@ -370,18 +278,18 @@ func buildUI(u *ui) fyne.CanvasObject {
 			calendarTapped(time.Now())
 		}),
 		widget.NewToolbarAction(theme.NavigateNextIcon(), func() {
-			t := theNote.date
+			t := theNote.Date
 			t = t.Add(time.Hour * 24)
 			calendarTapped(t)
 		}),
 	)
 
-	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theNote.date, calendarTapped, calendarIsDateImportant))
+	u.calendar = container.New(layout.NewCenterLayout(), fynex.NewCalendar(theNote.Date, calendarTapped, calendarIsDateImportant))
 
 	u.searchEntry = widget.NewEntry()
 	u.searchEntry.PlaceHolder = "Search"
 	u.searchEntry.OnChanged = func(str string) {
-		theFound = []*cjNote{}
+		theFound = []*note.Note{}
 		if len(str) > 1 {
 			theFound = find(str)
 		}
@@ -396,7 +304,7 @@ func buildUI(u *ui) fyne.CanvasObject {
 	searchEntryClear := widget.NewButtonWithIcon("", theme.ContentClearIcon(), func() {
 		u.searchEntry.SetText("")
 		theUI.mainWindow.Canvas().Focus(theUI.searchEntry)
-		theFound = []*cjNote{}
+		theFound = []*note.Note{}
 		u.foundList.UnselectAll()
 		u.foundList.Refresh()
 	})
@@ -409,17 +317,16 @@ func buildUI(u *ui) fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			if theFound[id].date.Year() == 1 {
-				// no date shows as Mon 1 Jan 0001
+			if theFound[id].Date.Year() == 1 {
+				// "no date" shows as Mon 1 Jan 0001
 				obj.(*widget.Label).SetText(theFound[id].Pathname)
 			} else {
-				obj.(*widget.Label).SetText(theFound[id].date.Format("Mon 2 Jan 2006"))
+				obj.(*widget.Label).SetText(theFound[id].Date.Format("Mon 2 Jan 2006"))
 			}
-			// obj.(*widget.Label).SetText(util.FirstLine(theFound[id].Text))
 		},
 	)
 	u.foundList.OnSelected = func(id widget.ListItemID) {
-		saveDirtyNote()
+		theNote.SaveIfDirty(theUI.noteEntry.Text)
 		theUI.setCurrentNote(theFound[id])
 	}
 
@@ -474,7 +381,7 @@ func (u *ui) promptUserForJournalDir() {
 		if str != theJournalDir {
 			theJournalDir = str
 			calendarTapped(time.Now())
-			theFound = []*cjNote{}
+			theFound = []*note.Note{}
 			u.foundList.Refresh()
 		}
 	})
@@ -485,8 +392,8 @@ func (u *ui) searchForHashTags() {
 		"--extended-regexp", // because we are using character class
 		"--recursive",
 		"--ignore-case",
-		"--only-matching",
-		"--no-filename",
+		"--only-matching",    // print only matching parts
+		"--no-filename",      // do not prefix output with file name
 		"-I",                 // don't process binary files
 		"--exclude-dir='.*'", // exclude hidden directories
 		"#[[:alnum:]]+",
@@ -558,13 +465,13 @@ func main() {
 
 	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now())), theme: fynex.NewNoteTheme()}
 	a.Settings().SetTheme(theUI.theme)
-	theNote = newNote(time.Now())
+	theNote = note.NewNote(theUserHomeDir, theDataDir, theJournalDir, time.Now())
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
 	// don't need this: just tap the 'today' icon in the taskbar
 	ctrlS := &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierControl}
 	theUI.mainWindow.Canvas().AddShortcut(ctrlS, func(shortcut fyne.Shortcut) {
-		saveDirtyNote()
+		theNote.SaveIfDirty(theUI.noteEntry.Text)
 	})
 
 	theUI.mainWindow.SetContent(buildUI(theUI))
@@ -576,5 +483,5 @@ func main() {
 	theUI.mainWindow.ShowAndRun()
 
 	// we *do* come here when app quits because window close [x] button pressed
-	saveDirtyNote()
+	theNote.SaveIfDirty(theUI.noteEntry.Text)
 }

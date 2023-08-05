@@ -3,6 +3,8 @@ COMMONPLACE JOURNAL TODO
 
 [ ] cj needs some proper refactoring
 
+[X] bundle userhome, data and journal directories
+
 [ ] https://github.com/aarzilli/nucular
 	can set style in RichText widget, eg
 	c.SetStyleForSel(findSel(bigEnchillada, "it's a false hologram, it is artificial"), richtext.TextStyle{Face: italic})

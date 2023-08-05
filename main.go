@@ -39,6 +39,7 @@ var (
 	theUserHomeDir string       // eg /home/gilbert
 	theDataDir     string       // eg .cj
 	theJournalDir  string       // eg Default
+	theDirectory   string       // eg /home/gilbert/.cj/Default (no trailing path separator)
 	theNote        *note.Note   // the current note
 	theFound       []*note.Note // the list of found notes
 	debugMode      bool
@@ -75,7 +76,7 @@ func (u *ui) setCurrentNote(n *note.Note) {
 
 func calendarTapped(t time.Time) {
 	theNote.SaveIfDirty(theUI.noteEntry.Text)
-	theUI.setCurrentNote(note.NewNote(theUserHomeDir, theDataDir, theJournalDir, t))
+	theUI.setCurrentNote(note.NewNote(theDirectory, t))
 	theUI.foundList.UnselectAll()
 	theUI.mainWindow.Canvas().Focus(theUI.noteEntry)
 }
@@ -98,7 +99,6 @@ func find(query string) []*note.Note {
 	// /home/gilbert/.cj/Default/2023/07/04.txt
 	// /home/gilbert/.cj/Default/2023/06/18.txt
 	// could use ripgrep which is faster
-	// fmt.Println(path.Join(theUserHomeDir, theDataDir, theJournalDir))
 	cmd := exec.Command("grep", // becomes /usr/bin/grep
 		"--fixed-strings", // interpret PATTERNS as fixed strings, not regular expressions.
 		"--recursive",
@@ -108,7 +108,7 @@ func find(query string) []*note.Note {
 		"-I",                 // don't process binary files
 		"--exclude-dir='.*'", // exclude hidden directories
 		query,                // don't surround with quotes or double quotes
-		path.Join(theUserHomeDir, theDataDir, theJournalDir))
+		theDirectory)
 	// fmt.Println(cmd.Path)
 	// fmt.Println(cmd.Args)
 	stdout, err := cmd.StdoutPipe()
@@ -126,7 +126,7 @@ func find(query string) []*note.Note {
 		if strings.HasPrefix(pathname, ".") {
 			continue
 		}
-		n := note.NewNote(theUserHomeDir, theDataDir, theJournalDir, pathname)
+		n := note.NewNote(theDirectory, pathname)
 		found = append(found, n)
 	}
 	// fmt.Println("-----")
@@ -366,6 +366,7 @@ func (u *ui) promptUserForJournalDir() {
 	}
 	if len(journalDirs) == 1 {
 		theJournalDir = journalDirs[0]
+		theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
 		return
 	}
 
@@ -380,6 +381,7 @@ func (u *ui) promptUserForJournalDir() {
 		}
 		if str != theJournalDir {
 			theJournalDir = str
+			theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
 			calendarTapped(time.Now())
 			theFound = []*note.Note{}
 			u.foundList.Refresh()
@@ -397,7 +399,7 @@ func (u *ui) searchForHashTags() {
 		"-I",                 // don't process binary files
 		"--exclude-dir='.*'", // exclude hidden directories
 		"#[[:alnum:]]+",
-		path.Join(theUserHomeDir, theDataDir, theJournalDir))
+		theDirectory)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.Fatal(err)
@@ -445,14 +447,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	if debugMode {
-		// if str, err := os.Executable(); err != nil {
-		// 	log.Printf("err: %T, %v\n", err, err)
-		// } else {
-		// 	log.Printf("str: %T, %v\n", str, str)
-		// }
-		log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\njournal:", theJournalDir)
-	}
+	theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
+	// if debugMode {
+	// if str, err := os.Executable(); err != nil {
+	// 	log.Printf("err: %T, %v\n", err, err)
+	// } else {
+	// 	log.Printf("str: %T, %v\n", str, str)
+	// }
+	// log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\njournal:", theJournalDir)
+	// log.Println(theDirectory)
+	// }
 
 	a := app.NewWithID("oddstream.cj")
 	a.SetIcon(&fyne.StaticResource{
@@ -465,7 +469,7 @@ func main() {
 
 	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now())), theme: fynex.NewNoteTheme()}
 	a.Settings().SetTheme(theUI.theme)
-	theNote = note.NewNote(theUserHomeDir, theDataDir, theJournalDir, time.Now())
+	theNote = note.NewNote(theDirectory, time.Now())
 
 	// shortcuts get swallowed if focus is in the note multiline entry widget
 	// don't need this: just tap the 'today' icon in the taskbar

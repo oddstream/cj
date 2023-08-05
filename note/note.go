@@ -19,12 +19,12 @@ type Note struct {
 	Date     time.Time
 }
 
-func NewNote(home, data, journal string, obj any) *Note {
+func NewNote(directory string, obj any) *Note {
 	n := &Note{}
 	switch v := obj.(type) {
 	case string:
 		n.Pathname = v
-		prefix := path.Join(home, data, journal) + "/"
+		prefix := directory + "/"
 		str := strings.TrimPrefix(v, prefix)
 		ext := filepath.Ext(str) // includes .
 		str = strings.TrimSuffix(str, ext)
@@ -37,7 +37,7 @@ func NewNote(home, data, journal string, obj any) *Note {
 		}
 	case time.Time:
 		n.Date = v
-		n.Pathname = path.Join(home, data, journal,
+		n.Pathname = path.Join(directory,
 			fmt.Sprintf("%04d", v.Year()),
 			fmt.Sprintf("%02d", v.Month()),
 			fmt.Sprintf("%02d.txt", v.Day()))

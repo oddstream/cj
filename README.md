@@ -129,7 +129,7 @@ BEGIN {
 Send the output of this script into a markdown file, like so:
 
 ```bash
-gawk reformat.awk -f exported > exported.md
+gawk -f reformat.awk exported > exported.md
 ```
 
 No tricksy or closed file formats here, no sir.

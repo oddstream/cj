@@ -55,9 +55,8 @@ type ui struct {
 	theme       fyne.Theme // Theme is an interface
 }
 
-func appTitle(t time.Time) string {
+func appTitle() string {
 	return "Commonplace Journal - " + theJournalDir
-	// return t.Format("Mon 2 Jan 2006") + " - " + theJournalDir
 }
 
 func (u *ui) displayText() {
@@ -71,7 +70,7 @@ func (u *ui) setCurrentNote(n *note.Note) {
 	theNote = n
 	u.displayText()
 	u.calendar.Objects[0] = fynex.NewCalendar(theNote.Date, calendarTapped, calendarIsDateImportant)
-	u.mainWindow.SetTitle(appTitle(n.Date))
+	u.mainWindow.SetTitle(appTitle())
 }
 
 func calendarTapped(t time.Time) {
@@ -246,6 +245,85 @@ func (u *ui) findEx() {
 	pu.Canvas.Focus(ent)
 }
 
+func (u *ui) promptUserForJournalDir() {
+	var journalDirs []string
+
+	homePath := path.Join(theUserHomeDir, theDataDir)
+	f, err := os.Open(homePath)
+	if err != nil {
+		log.Fatalf("couldn't open path %s: %s\n", homePath, err)
+	}
+	dirNames, err := f.Readdirnames(-1)
+	if err != nil {
+		log.Fatalf("couldn't read dir names for path %s: %s\n", homePath, err)
+	}
+	for _, dirName := range dirNames {
+		if !strings.HasPrefix(dirName, ".") {
+			journalDirs = append(journalDirs, dirName)
+		}
+	}
+	if len(journalDirs) == 1 {
+		theJournalDir = journalDirs[0]
+		theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
+		return
+	}
+
+	// this looks fugly and opens up in the home directory and doesn't show hidden directories
+	// dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+	// 	fmt.Println(uri)
+	// }, w)
+
+	fynex.ShowListEntryPopUp2(u.mainWindow.Canvas(), "Select Journal", journalDirs, func(str string) {
+		if str == "" {
+			return
+		}
+		if str != theJournalDir {
+			theJournalDir = str
+			theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
+			calendarTapped(time.Now())
+			theFound = []*note.Note{}
+			u.foundList.Refresh()
+		}
+	})
+}
+
+func (u *ui) searchForHashTags() {
+	cmd := exec.Command("grep",
+		"--extended-regexp", // because we are using character class
+		"--recursive",
+		"--ignore-case",
+		"--only-matching",    // print only matching parts
+		"--no-filename",      // do not prefix output with file name
+		"-I",                 // don't process binary files
+		"--exclude-dir='.*'", // exclude hidden directories
+		"#[[:alnum:]]+",      // \w a word character: [0-9A-Za-z_]
+		theDirectory)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalf("cmd.Start() failed with %s\n", err)
+	}
+	stdin := bufio.NewScanner(stdout)
+	var results []string
+	for stdin.Scan() {
+		txt := stdin.Text()
+		txt = strings.ToLower(txt)
+		// fmt.Println(txt)
+		results = append(results, txt)
+	}
+	cmd.Wait() // ignore error return because we're done
+	if len(results) > 0 {
+		results = util.RemoveDuplicateStrings(results) // sorts slice as a side-effect
+		fynex.ShowListPopUp2(theUI.mainWindow.Canvas(), "Find Hashtag", results, func(str string) {
+			theFound = find(str)
+			theUI.postFind()
+		})
+	}
+}
+
 func buildUI(u *ui) fyne.CanvasObject {
 	u.toolbar = widget.NewToolbar(
 		// https://developer.fyne.io/explore/icons
@@ -346,86 +424,6 @@ func buildUI(u *ui) fyne.CanvasObject {
 	// u.noteEntry.OnChanged = func(str string) { println(str) }
 	return fynex.NewAdaptiveSplit(side, mainPanel)
 }
-
-func (u *ui) promptUserForJournalDir() {
-	var journalDirs []string
-
-	homePath := path.Join(theUserHomeDir, theDataDir)
-	f, err := os.Open(homePath)
-	if err != nil {
-		log.Fatalf("couldn't open path %s: %s\n", homePath, err)
-	}
-	dirNames, err := f.Readdirnames(-1)
-	if err != nil {
-		log.Fatalf("couldn't read dir names for path %s: %s\n", homePath, err)
-	}
-	for _, dirName := range dirNames {
-		if !strings.HasPrefix(dirName, ".") {
-			journalDirs = append(journalDirs, dirName)
-		}
-	}
-	if len(journalDirs) == 1 {
-		theJournalDir = journalDirs[0]
-		theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
-		return
-	}
-
-	// this looks fugly and opens up in the home directory and doesn't show hidden directories
-	// dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-	// 	fmt.Println(uri)
-	// }, w)
-
-	fynex.ShowListEntryPopUp2(u.mainWindow.Canvas(), "Select Journal", journalDirs, func(str string) {
-		if str == "" {
-			return
-		}
-		if str != theJournalDir {
-			theJournalDir = str
-			theDirectory = path.Join(theUserHomeDir, theDataDir, theJournalDir)
-			calendarTapped(time.Now())
-			theFound = []*note.Note{}
-			u.foundList.Refresh()
-		}
-	})
-}
-
-func (u *ui) searchForHashTags() {
-	cmd := exec.Command("grep",
-		"--extended-regexp", // because we are using character class
-		"--recursive",
-		"--ignore-case",
-		"--only-matching",    // print only matching parts
-		"--no-filename",      // do not prefix output with file name
-		"-I",                 // don't process binary files
-		"--exclude-dir='.*'", // exclude hidden directories
-		"#[[:alnum:]]+",
-		theDirectory)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = cmd.Start()
-	if err != nil {
-		log.Fatalf("cmd.Start() failed with %s\n", err)
-	}
-	stdin := bufio.NewScanner(stdout)
-	var results []string
-	for stdin.Scan() {
-		txt := stdin.Text()
-		txt = strings.ToLower(txt)
-		// fmt.Println(txt)
-		results = append(results, txt)
-	}
-	cmd.Wait() // ignore error return because we're done
-	if len(results) > 0 {
-		results = util.RemoveDuplicateStrings(results) // sorts slice as a side-effect
-		fynex.ShowListPopUp2(theUI.mainWindow.Canvas(), "Find Hashtag", results, func(str string) {
-			theFound = find(str)
-			theUI.postFind()
-		})
-	}
-}
-
 func main() {
 	{
 		var err error
@@ -457,7 +455,8 @@ func main() {
 	// log.Println("\nhome:", theUserHomeDir, "\ndata:", theDataDir, "\njournal:", theJournalDir)
 	// log.Println(theDirectory)
 	// }
-
+	// info, _ := debug.ReadBuildInfo()
+	// fmt.Printf("info: %+v", info.Main.Path)
 	a := app.NewWithID("oddstream.cj")
 	a.SetIcon(&fyne.StaticResource{
 		StaticName:    "today.png",
@@ -467,7 +466,7 @@ func main() {
 	// theTheme := fynex.NewNoteTheme()
 	// a.Settings().SetTheme(&theTheme)
 
-	theUI = &ui{mainWindow: a.NewWindow(appTitle(time.Now())), theme: fynex.NewNoteTheme()}
+	theUI = &ui{mainWindow: a.NewWindow(appTitle()), theme: fynex.NewNoteTheme()}
 	a.Settings().SetTheme(theUI.theme)
 	theNote = note.NewNote(theDirectory, time.Now())
 

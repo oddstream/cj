@@ -3,7 +3,32 @@ COMMONPLACE JOURNAL TODO
 
 [ ] cj needs some proper refactoring
 
-[X] bundle userhome, data and journal directories
+[ ] search for #go finds #goodcar
+
+[ ] put a symlink in ~/Desktop and the binary in /home/gilbert/go/bin/ (using go install)
+
+[ ] # icon (white on clear, 48x48)
+
+[ ] need way, in plain text, of marking a line or paragraph with a hashtag,
+	making it clear that the hashtag applies just to that text
+
+- Bard ------
+Hashtags should go before the text they apply to. This is the standard way to use hashtags in social media, and it makes it clear that the hashtag is associated with the text that comes before it.
+
+For example, if you're writing a blog post about cats, you might use the hashtag #cats. You would write the hashtag as follows:
+
+#cats
+This is a blog post about cats.
+If you put the hashtag after the text, it would be less clear that the hashtag is associated with the text that comes before it. For example, the following would be less clear:
+
+This is a blog post about cats #cats.
+In this case, it's not clear whether the hashtag #cats is associated with the word "cats" or the entire sentence.
+
+So, to make sure that your hashtags are clear and easy to understand, always put them before the text they apply to.
+--------------
+
+[-] store y, m, d in Note instead of time.Time?
+	then publish Date()
 
 [ ] https://github.com/aarzilli/nucular
 	can set style in RichText widget, eg
@@ -173,6 +198,7 @@ COMMONPLACE JOURNAL TODO
 
 [ ] func funcName(a INTERFACETYPE) CONCRETETYPE
 
+[X] bundle userhome, data and journal directories
 [X] Move cjNote.pathname to Note.Pathname
 [X] why load the text off all notes?
 [X] do something with Mon 1 Jan 0001

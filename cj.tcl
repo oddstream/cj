@@ -13,6 +13,7 @@ set monthAbbrs {"---" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct
 set searchString ""
 set optionIgnoreCase 1
 set optionSearchWords 1
+set optionLockOldNotes 1
 
 # could store the two importants dates (today and displayed)
 # as separate variables, an array or a dict
@@ -127,17 +128,46 @@ proc isNoteDirty? {} {
 	return [.pw.note edit modified]
 }
 
+proc isNoteOld? {} {
+	global displayedYear displayedMonth displayedDay
+	global todayYear todayMonth todayDay
+	if { $displayedYear < $todayYear } {
+		return 1
+	}
+	if { $displayedMonth < $todayMonth } {
+		return 1
+	}
+	if { $displayedDay < $todayDay } {
+		return 1
+	}
+	return 0
+}
+
+proc isNoteLocked? {} {
+	global optionLockOldNotes
+
+	return $optionLockOldNotes && [isNoteOld?]
+}
+
 proc getNoteText {} {
 	# end goes beyond the end of the text, adding a new line, so subtract one character
+	# get uses line.char for indexes, eg 1.0
+	# lines are numbered from 1
+	# chars are numbered from 0
+	# see p450
 	set txt [.pw.note get 1.0 "end - 1 c"]
 }
 
 proc setNoteText {txt} {
+	.pw.note configure -state normal
 	.pw.note configure -undo false
 	.pw.note delete 1.0 end
-	.pw.note insert end $txt
+	.pw.note insert 1.0 $txt
 	.pw.note configure -undo true
 	.pw.note edit modified false
+	if [isNoteLocked?] {
+		.pw.note configure -state disabled
+	}
 	focus .pw.note
 }
 
@@ -154,7 +184,11 @@ proc loadDisplayedNote {} {
 }
 
 proc saveDisplayedNote {} {
-	if {![isNoteDirty?]} {
+	if [isNoteLocked?] {
+		puts "displayed note is locked"
+		return
+	}
+	if ![isNoteDirty?] {
 		puts "displayed note is not dirty"
 		return
 	}
@@ -183,8 +217,11 @@ proc cancelDialogCommand {} {
 	destroy .dialog
 }
 
-proc showSearchOptionsDialog {} {
-	global optionIgnoreCase optionSearchWords
+proc showOptionsDialog {} {
+	# TODO option to lock/allow edits to notes before today
+	# text -state disabled
+	# text -state normal
+	global optionIgnoreCase optionSearchWords optionLockOldNotes
 
 	toplevel .dialog
 
@@ -193,10 +230,12 @@ proc showSearchOptionsDialog {} {
 
 	ttk::checkbutton .dialog.ignoreCase -variable optionIgnoreCase -text "Ignore case"
 	ttk::checkbutton .dialog.searchWords -variable optionSearchWords -text "Search words"
+	ttk::checkbutton .dialog.lockOldNotes -variable optionLockOldNotes -text "Lock old notes"
 	ttk::button .dialog.closeButton -text "Close" -command {cancelDialogCommand}
 
 	pack .dialog.ignoreCase -side left -fill both
 	pack .dialog.searchWords -side left -fill both
+	pack .dialog.lockOldNotes -side left -fill both
 	pack .dialog.closeButton -side right
 
 	wm title .dialog "Options"
@@ -633,12 +672,13 @@ menu .m -tearoff 0
 .m add command -label Save -underline 0 -command saveDisplayedNote -accelerator <Control-s>
 
 bind .pw.note <Button-3> {tk_popup .m %X %Y}
-bind . <Control-s> {.m invoke Save}
+# bind . <Control-s> {.m invoke Save}
 
 # TODO Control-left yesterday
 # TODO Control-right tomorrow
-bind . <Control-o> {showSearchOptionsDialog}
-bind . <Control-t> {setYearMonthDay $todayYear $todayMonth $todayDay}
+# TODO investigate why keys here fall though to text widget
+bind . <F2> {setYearMonthDay $todayYear $todayMonth $todayDay}
+bind . <F4> {showOptionsDialog}
 
 bind . <F5> {findCommand}
 bind . <F6> {widenCommand}

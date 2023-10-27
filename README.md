@@ -44,13 +44,15 @@ Thereafter, because all the notes are just text files in directory trees, they c
 
 ## Implementation
 
-`cj` is written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library.
+`cj` was first written in [Go](https://go.dev/), with the user interface done using the [Fyne](https://fyne.io/) library (can't remember where the calendar widget came from).
 
 The search code was copied and adapted from [Andrew Healey's grup](https://healeycodes.com/beating-grep-with-go), but the need for simplicity and flexibility saw that (very fast code) retired and replaced by using `grep`. I've tested `cj` with `grep` version 3.7 on Linux, and it seems fine. You'd better have `grep` available on your PATH, otherwise searching won't work.
 
 There's no indexing or anything fancy going on under the hood - what we have here is a basic text editor, grep and a small user interface.
 
-I could - maybe should - be doing this in Dart and Flutter, but I happened to be using Go at the time.
+Then `cj` was reimplemented in Tcl + Tk, which has a much better text editor widget. Inspired by the use of `grep` to do the searching, this version uses `ncal` to create the calendar widget.
+
+Maybe in the future I'll do versions in Dart + Flutter, or Lua + [wxWidgets](https://github.com/pkulchenko/wxlua) or [lupLua](https://www.tecgraf.puc-rio.br/iup/en/basic/index.html).
 
 ## Local file storage
 

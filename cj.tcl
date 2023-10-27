@@ -11,6 +11,8 @@ set activeColor #080
 set monthNames {"---" "January" "February" "March" "April" "May" "June" "July" "August" "September" "October" "November" "December"}
 set monthAbbrs {"---" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"}
 set searchString ""
+set optionIgnoreCase 1
+set optionSearchWords 1
 
 # could store the two importants dates (today and displayed)
 # as separate variables, an array or a dict
@@ -181,6 +183,40 @@ proc cancelDialogCommand {} {
 	destroy .dialog
 }
 
+proc showSearchOptionsDialog {} {
+	global optionIgnoreCase optionSearchWords
+
+	toplevel .dialog
+
+	# hide .dialog while we build it
+	wm withdraw .dialog
+
+	ttk::checkbutton .dialog.ignoreCase -variable optionIgnoreCase -text "Ignore case"
+	ttk::checkbutton .dialog.searchWords -variable optionSearchWords -text "Search words"
+	ttk::button .dialog.closeButton -text "Close" -command {cancelDialogCommand}
+
+	pack .dialog.ignoreCase -side left -fill both
+	pack .dialog.searchWords -side left -fill both
+	pack .dialog.closeButton -side right
+
+	wm title .dialog "Options"
+	wm protocol .dialog WM_DELETE_WINDOW {
+		.dialog.closeButton invoke
+	}
+	wm transient .dialog .
+
+	bind .dialog <Escape> {.dialog.closeButton invoke}
+
+	# ready to display dialog
+	wm deiconify .dialog
+
+	# make .dialog modal
+	catch {tk visibility .dialog}
+	focus .dialog.ignoreCase
+	catch {grab set .dialog}
+	catch {tkwait window .dialog}
+}
+
 proc showFindDialog {title label command} {
 	global searchString
 	set searchString ""
@@ -246,12 +282,11 @@ proc widenCommand {} {
 		if { [llength $foundLines] == 0 } {
 			return
 		}
-		set oldlines [.pw.left.found get 0 end]
-		set oldlines2 {}
-		foreach line $oldlines {
-			lappend oldlines2 [ISO8061ToFilename $line]
+		set oldlines {}
+		foreach line [.pw.left.found get 0 end] {
+			lappend oldlines [ISO8061ToFilename $line]
 		}
-		set newlines [union $oldlines2 $foundLines]
+		set newlines [union $oldlines $foundLines]
 		.pw.left.found delete 0 end
 		foreach line $newlines {
 			.pw.left.found insert end [filenameToISO8061 $line]
@@ -275,13 +310,12 @@ proc narrowCommand {} {
 			return
 		}
 		# puts -nonewline "found "; puts $foundLines
-		set oldlines [.pw.left.found get 0 end]
-		set oldlines2 {}
-		foreach line $oldlines {
-			lappend oldlines2 [ISO8061ToFilename $line]
+		set oldlines {}
+		foreach line [.pw.left.found get 0 end] {
+			lappend oldlines [ISO8061ToFilename $line]
 		}
-		# puts -nonewline "old2 "; puts $oldlines2
-		set newlines [intersection $oldlines2 $foundLines]
+		# puts -nonewline "old "; puts $oldlines
+		set newlines [intersection $oldlines $foundLines]
 		# puts -nonewline "new "; puts $newlines
 		.pw.left.found delete 0 end
 		foreach line $newlines {
@@ -305,7 +339,10 @@ proc excludeCommand {} {
 		if { [llength $foundLines] == 0 } {
 			return
 		}
-		set oldlines [.pw.left.found get 0 end]
+		set oldlines {}
+		foreach line [.pw.left.found get 0 end] {
+			lappend oldlines [ISO8061ToFilename $line]
+		}
 		set newlines [exclusion $oldlines $foundLines]
 		.pw.left.found delete 0 end
 		foreach line $newlines {
@@ -319,6 +356,22 @@ proc excludeCommand {} {
 	showFindDialog "Exclude Notes" "Exclude" do
 }
 
+proc searchOptions {} {
+	global optionIgnoreCase optionSearchWords
+	# --fixed-strings do not use regular expressions
+	# -I exclude binary files
+	set lst "--word-regexp --fixed-strings --recursive --files-with-matches --exclude-dir='.*' -I"
+	if $optionIgnoreCase {
+		lappend lst "--ignore-case"
+	} else {
+		lappend lst "--no-ignore-case"
+	}
+	if $optionSearchWords {
+		lappend lst "--word-regexp"
+	}
+	return $lst
+}
+
 proc makeFoundList {} {
 	global searchString
 	if { $searchString eq "" } {
@@ -327,8 +380,11 @@ proc makeFoundList {} {
 	set output ""
 	set grepstatus 0
 	try {
-		# -I exclude binary files
-		set output [exec grep --fixed-strings --recursive --ignore-case --files-with-matches --exclude-dir='.*' -I $searchString [directory]]
+		# [searchOptions] returns a list
+		# use Tcl’s argument expansion syntax to provide the list elements as separate arguments
+		# (versions of Tcl prior to 8.5 used the eval command to similar effect)
+		# see Tcl and the Tk Toolkit 2nd edition p202-203
+		set output [exec grep {*}[searchOptions] $searchString [directory]]
 	} trap CHILDSTATUS {results options} {
     	set grepstatus [lindex [dict get $options -errorcode] 2]
 		# puts [string cat "grepstatus " $grepstatus " results " $results]
@@ -454,9 +510,9 @@ proc nextMonth {} {
 
 proc setDay {day} {
 	global displayedDay displayedMonth displayedYear
+	saveDisplayedNote
 	set displayedDay $day
 	decorateDayButtons
-	saveDisplayedNote
 	loadDisplayedNote
 }
 
@@ -465,11 +521,11 @@ proc setYearMonthDay {y m d} {
 	if { $y == $displayedYear && $m == $displayedMonth } {
 		setDay $d
 	} else {
+		saveDisplayedNote
 		set displayedYear $y
 		set displayedMonth $m
 		set displayedDay $d
 		refreshCalendar
-		saveDisplayedNote
 		loadDisplayedNote
 	}
 }
@@ -499,7 +555,7 @@ set dayNames [regexp -all -inline {\S+} [lindex $calendarLines 1]]
 panedwindow .pw -orient horizontal -showhandle 1
 
 # outer frame for all widgets on left hand side of panedwindow
-frame .pw.left -padx 8 -pady 8
+frame .pw.left -padx 8 -pady 16
 
 # create a 7-column frame to hold the header, day names and day buttons
 frame .pw.left.calframe
@@ -527,8 +583,8 @@ createDayButtons $calendarLines
 listbox .pw.left.found -selectmode single
 scrollbar .pw.left.sb -orient vertical -command {.pw.left.found yview}
 
-grid .pw.left.found -row 1 -column 0 -sticky news
-grid .pw.left.sb -row 1 -column 1 -sticky ns
+grid .pw.left.found -row 1 -column 0 -sticky news -pady 16
+grid .pw.left.sb -row 1 -column 1 -sticky ns -pady 16
 
 .pw.left.found configure -yscrollcommand {.pw.left.sb set}
 
@@ -557,24 +613,39 @@ loadDisplayedNote
 
 # https://www.pythontutorial.net/tkinter/tkinter-event-binding/
 menu .m -tearoff 0
-.m add command -label "Cut" -command {puts "Cut"}
-.m add command -label "Copy" -command {puts "Copy"}
-.m add command -label "Paste" -command {puts "Paste"}
+# Cut the selected text to the clipboard
+# set selected_text [.t get sel.first sel.last]
+# .t delete sel.first sel.last
+# clipboard clear
+# clipboard append $selected_text
+# .m add command -label "Cut" -command {puts "Cut"}
+# Copy the selected text to the clipboard
+# set selected_text [.t get sel.first sel.last]
+# clipboard clear
+# clipboard append $selected_text
+# .m add command -label "Copy" -command {puts "Copy"}
+# Get the text from the clipboard
+# set clipboard_text [clipboard get]
+# Insert the text into the text widget
+# .t insert end $clipboard_text
+# .m add command -label "Paste" -command {puts "Paste"}
+.m add command -label "Select All" -underline 7 -command {.pw.note tag add sel 1.0 end} -accelerator <Control-a>
 .m add command -label Save -underline 0 -command saveDisplayedNote -accelerator <Control-s>
 
 bind .pw.note <Button-3> {tk_popup .m %X %Y}
 bind . <Control-s> {.m invoke Save}
 
-bind . <F2> {setYearMonthDay $todayYear $todayMonth $todayDay}
+# TODO Control-left yesterday
+# TODO Control-right tomorrow
+bind . <Control-o> {showSearchOptionsDialog}
+bind . <Control-t> {setYearMonthDay $todayYear $todayMonth $todayDay}
+
 bind . <F5> {findCommand}
 bind . <F6> {widenCommand}
 bind . <F7> {narrowCommand}
 bind . <F8> {excludeCommand}
 
 wm protocol . WM_DELETE_WINDOW {
-	set response [tk_messageBox -type yesno -message "Really quit?"]
-	if {$response eq "yes"} {
-		# save displayed note
-		destroy .
-	}
+	saveDisplayedNote
+	destroy .
 }

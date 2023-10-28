@@ -171,6 +171,8 @@ proc setNoteText {txt} {
 	focus .pw.note
 }
 
+# load/save note (always the displayed note)
+
 proc loadDisplayedNote {} {
 	if {[file exists [displayedFilename]]} {
 		set f [open [displayedFilename] r]
@@ -205,7 +207,7 @@ proc saveDisplayedNote {} {
 			file mkdir $dir
 		}
 		set f [open $fname w+]	;# Open the file for reading and writing. Truncate it if it exists. If it does not exist, create a new file.
-		puts $f $txt
+		puts -nonewline $f $txt
 		close $f
 		puts "saved $fname"
 	}
@@ -440,6 +442,29 @@ proc makeFoundList {} {
 
 # calendar
 
+proc numDaysInMonth {month year} {
+	if {[expr $month < 1] || [expr $month > 12]} {
+		error "Invalid month: $month"
+	}
+
+	if { [lsearch "4 6 9 11" $month] != -1 } {
+		set n 30
+	} elseif { $month == 2 } {
+		if { [expr $year % 4 == 0] && [expr $year % 100 != 0] || [expr $year % 400 == 0] } {
+			set n 29
+		} else {
+			set n 28
+		}
+	} else {
+		set n 31
+	}
+
+ 	return $n
+}
+# for {set i 1} {$i <=12} {incr i} {
+# 	puts [numDaysInMonth $i 2023]
+# }
+
 proc decorateDayButtons {} {
 	proc decorate {targetday color} {
 		# iterate through children of .pw.left.calframe
@@ -512,7 +537,7 @@ proc createDayButtons {calendarLines} {
 }
 
 proc refreshCalendar {} {
-	global monthNames displayedDay displayedMonth displayedYear
+	global displayedDay displayedMonth displayedYear
 	# puts [string cat "refreshCalendar " $displayedYear " " $displayedMonth " " $displayedDay]
 
 	clearDayButtons
@@ -523,15 +548,53 @@ proc refreshCalendar {} {
 	createDayButtons $calendarLines
 }
 
+proc prevDay {} {
+	global displayedDay displayedMonth displayedYear
+	set y $displayedYear
+	set m $displayedMonth
+	set d $displayedDay
+	if { $d == 1 } {
+		if { $m == 1 } {
+			set m 12
+			incr y -1
+		} else {
+			incr m -1
+		}
+		set d [numDaysInMonth $m $y]
+	} else {
+		incr d -1
+	}
+	setYearMonthDay $y $m $d
+}
+
+proc nextDay {} {
+	global displayedDay displayedMonth displayedYear
+	set y $displayedYear
+	set m $displayedMonth
+	set d $displayedDay
+	if { $d == [numDaysInMonth $m $y] } {
+		if { $m == 12 } {
+			set m 1
+			incr y
+		} else {
+			incr m
+		}
+		set d 1
+	} else {
+		incr d
+	}
+	setYearMonthDay $y $m $d
+}
+
 proc prevMonth {} {
 	global displayedDay displayedMonth displayedYear
-	if {$displayedMonth == 1} {
+	if { $displayedMonth == 1 } {
 		set displayedMonth 12
 		incr displayedYear -1
 	} else {
 		incr displayedMonth -1
 	}
-	setDay 1
+	setDay [numDaysInMonth $displayedMonth $displayedYear]
 	refreshCalendar
 }
 
@@ -591,7 +654,7 @@ set calendarLines [split [exec ncal -bh -m $displayedMonth -y $displayedYear -1]
 set dayNames [regexp -all -inline {\S+} [lindex $calendarLines 1]]
 #puts $dayNames
 
-panedwindow .pw -orient horizontal -showhandle 1
+panedwindow .pw -orient horizontal ;#-showhandle 1
 
 # outer frame for all widgets on left hand side of panedwindow
 frame .pw.left -padx 8 -pady 16
@@ -668,6 +731,13 @@ menu .m -tearoff 0
 # Insert the text into the text widget
 # .t insert end $clipboard_text
 # .m add command -label "Paste" -command {puts "Paste"}
+#
+# .m add command -label "Cut" -command {tk_textCut %W}
+# event add <<Cut>> <Control-x>
+# .m add command -label "Copy" -command {tk_textCopy %W}
+# event add <<Copy>> <Control-c>
+# .m add command -label "Paste" -command {tk_textPaste %W}
+# event add <<Paste>> <Control-v>
 .m add command -label "Select All" -underline 7 -command {.pw.note tag add sel 1.0 end} -accelerator <Control-a>
 .m add command -label Save -underline 0 -command saveDisplayedNote -accelerator <Control-s>
 
@@ -677,6 +747,34 @@ bind .pw.note <Button-3> {tk_popup .m %X %Y}
 # TODO Control-left yesterday
 # TODO Control-right tomorrow
 # TODO investigate why keys here fall though to text widget
+
+# Shortcut keys fall through to an underlying text widget in Tcl/Tk because text widgets are the most common type of widget that accepts keyboard input.
+# When a user presses a shortcut key, Tk first checks to see if the current focus widget is a text widget.
+# If it is, Tk will send the shortcut key event to the text widget. If the text widget does not handle the shortcut key event, Tk will send the event to the next widget in the focus chain.
+#
+# This behavior is by design. It allows users to use shortcut keys to perform common operations, such as copying and pasting text, even if the current focus widget is not a text widget.
+#
+# If you do not want shortcut keys to fall through to an underlying text widget, you can prevent this by overriding the handleEvent() method of the widget that you want to handle the shortcut keys.
+# The handleEvent() method is responsible for handling all events that are sent to the widget.
+#
+# To override the handleEvent() method, you will need to create a new class that inherits from the widget class that you want to handle the shortcut keys.
+# In the new class, you will need to override the handleEvent() method and implement your own logic for handling shortcut key events.
+#
+# Once you have created the new class, you will need to create an instance of it and use it to replace the widget that you do not want to handle shortcut keys.
+#
+# Here is an example of how to override the handleEvent() method to prevent shortcut keys from falling through to an underlying text widget:
+#
+# Tcl
+# class MyWidget extends TkButton {
+#   handleEvent {event} {
+    # if {$event == "KeyPress"} {
+    #   Handle the shortcut key event.
+    # } else {
+    #   Call the superclass handleEvent() method to handle the event.
+    #   super handleEvent $event
+    # }
+#   }
+# }
 bind . <F2> {setYearMonthDay $todayYear $todayMonth $todayDay}
 bind . <F4> {showOptionsDialog}
 
@@ -685,7 +783,11 @@ bind . <F6> {widenCommand}
 bind . <F7> {narrowCommand}
 bind . <F8> {excludeCommand}
 
+bind . <F9> {prevDay}
+bind . <F10> {nextDay}
+
 wm protocol . WM_DELETE_WINDOW {
 	saveDisplayedNote
 	destroy .
 }
+

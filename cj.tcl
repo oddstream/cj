@@ -125,7 +125,7 @@ proc ISO8061ToFilename {txt} {
 # note
 
 proc isNoteDirty? {} {
-	return [.pw.note edit modified]
+	return [.pw.right.note edit modified]
 }
 
 proc isNoteOld? {} {
@@ -143,10 +143,8 @@ proc isNoteOld? {} {
 	return 0
 }
 
-proc isNoteLocked? {} {
-	global optionLockOldNotes
-
-	return $optionLockOldNotes && [isNoteOld?]
+proc unlockNote {} {
+	.pw.right.note configure -state normal
 }
 
 proc getNoteText {} {
@@ -155,20 +153,20 @@ proc getNoteText {} {
 	# lines are numbered from 1
 	# chars are numbered from 0
 	# see p450
-	set txt [.pw.note get 1.0 "end - 1 c"]
+	set txt [.pw.right.note get 1.0 "end - 1 c"]
 }
 
 proc setNoteText {txt} {
-	.pw.note configure -state normal
-	.pw.note configure -undo false
-	.pw.note delete 1.0 end
-	.pw.note insert 1.0 $txt
-	.pw.note configure -undo true
-	.pw.note edit modified false
-	if [isNoteLocked?] {
-		.pw.note configure -state disabled
+	.pw.right.note configure -state normal
+	.pw.right.note configure -undo false
+	.pw.right.note delete 1.0 end
+	.pw.right.note insert 1.0 $txt
+	.pw.right.note configure -undo true
+	.pw.right.note edit modified false
+	if [isNoteOld?] {
+		.pw.right.note configure -state disabled
 	}
-	focus .pw.note
+	focus .pw.right.note
 }
 
 # load/save note (always the displayed note)
@@ -186,10 +184,6 @@ proc loadDisplayedNote {} {
 }
 
 proc saveDisplayedNote {} {
-	if [isNoteLocked?] {
-		puts "displayed note is locked"
-		return
-	}
 	if ![isNoteDirty?] {
 		puts "displayed note is not dirty"
 		return
@@ -219,47 +213,9 @@ proc cancelDialogCommand {} {
 	destroy .dialog
 }
 
-proc showOptionsDialog {} {
-	# TODO option to lock/allow edits to notes before today
-	# text -state disabled
-	# text -state normal
-	global optionIgnoreCase optionSearchWords optionLockOldNotes
-
-	toplevel .dialog
-
-	# hide .dialog while we build it
-	wm withdraw .dialog
-
-	ttk::checkbutton .dialog.ignoreCase -variable optionIgnoreCase -text "Ignore case"
-	ttk::checkbutton .dialog.searchWords -variable optionSearchWords -text "Search words"
-	ttk::checkbutton .dialog.lockOldNotes -variable optionLockOldNotes -text "Lock old notes"
-	ttk::button .dialog.closeButton -text "Close" -command {cancelDialogCommand}
-
-	pack .dialog.ignoreCase -side left -fill both
-	pack .dialog.searchWords -side left -fill both
-	pack .dialog.lockOldNotes -side left -fill both
-	pack .dialog.closeButton -side right
-
-	wm title .dialog "Options"
-	wm protocol .dialog WM_DELETE_WINDOW {
-		.dialog.closeButton invoke
-	}
-	wm transient .dialog .
-
-	bind .dialog <Escape> {.dialog.closeButton invoke}
-
-	# ready to display dialog
-	wm deiconify .dialog
-
-	# make .dialog modal
-	catch {tk visibility .dialog}
-	focus .dialog.ignoreCase
-	catch {grab set .dialog}
-	catch {tkwait window .dialog}
-}
-
-proc showFindDialog {title label command} {
+proc showSearchDialog {title label command} {
 	global searchString
+	global optionIgnoreCase optionSearchWords
 	set searchString ""
 
 	toplevel .dialog
@@ -268,12 +224,16 @@ proc showFindDialog {title label command} {
 	wm withdraw .dialog
 
 	ttk::entry .dialog.findText -textvariable searchString
+	ttk::checkbutton .dialog.ignoreCase -variable optionIgnoreCase -text "Ignore case"
+	ttk::checkbutton .dialog.searchWords -variable optionSearchWords -text "Search whole words"
 	ttk::button .dialog.findButton -text $label -command $command
 	ttk::button .dialog.cancelButton -text "Cancel" -command {cancelDialogCommand}
 
-	grid config .dialog.findText -column 1 -row 0
-	grid config .dialog.findButton -column 2 -row 0
-	grid config .dialog.cancelButton -column 3 -row 0
+	grid config .dialog.findText -column 0 -row 0
+	grid config .dialog.findButton -column 1 -row 0
+	grid config .dialog.cancelButton -column 2 -row 0
+	grid config .dialog.ignoreCase -column 0 -row 2 -sticky w
+	grid config .dialog.searchWords -column 0 -row 3 -sticky w
 
 	wm title .dialog $title
 	wm protocol .dialog WM_DELETE_WINDOW {
@@ -310,7 +270,7 @@ proc findCommand {} {
 		}
 		cancelDialogCommand
 	}
-	showFindDialog "Find Notes" "Find" do
+	showSearchDialog "Find Notes" "Find" do
 }
 
 proc widenCommand {} {
@@ -337,7 +297,7 @@ proc widenCommand {} {
 	if { [.pw.left.found size] == 0 } {
 		return
 	}
-	showFindDialog "Find More Notes" "Widen" do
+	showSearchDialog "Find More Notes" "Widen" do
 }
 
 proc narrowCommand {} {
@@ -367,7 +327,7 @@ proc narrowCommand {} {
 	if { [.pw.left.found size] == 0 } {
 		return
 	}
-	showFindDialog "Find Fewer Notes" "Narrow" do
+	showSearchDialog "Find Fewer Notes" "Narrow" do
 }
 
 proc excludeCommand {} {
@@ -394,7 +354,7 @@ proc excludeCommand {} {
 	if { [.pw.left.found size] == 0 } {
 		return
 	}
-	showFindDialog "Exclude Notes" "Exclude" do
+	showSearchDialog "Exclude Notes" "Exclude" do
 }
 
 proc searchOptions {} {
@@ -659,6 +619,8 @@ panedwindow .pw -orient horizontal ;#-showhandle 1
 # outer frame for all widgets on left hand side of panedwindow
 frame .pw.left -padx 8 -pady 16
 
+# calendar
+
 # create a 7-column frame to hold the header, day names and day buttons
 frame .pw.left.calframe
 grid .pw.left.calframe -sticky news
@@ -682,14 +644,14 @@ for {set i 0} {$i < 7} {incr i} {
 
 createDayButtons $calendarLines
 
-listbox .pw.left.found -selectmode single
-scrollbar .pw.left.sb -orient vertical -command {.pw.left.found yview}
+# found listbox
 
+listbox .pw.left.found -selectmode single
 grid .pw.left.found -row 1 -column 0 -sticky news -pady 16
+scrollbar .pw.left.sb -orient vertical -command {.pw.left.found yview}
 grid .pw.left.sb -row 1 -column 1 -sticky ns -pady 16
 
 .pw.left.found configure -yscrollcommand {.pw.left.sb set}
-
 bind .pw.left.found <<ListboxSelect>> {
 	# puts -nonewline "listbox select "
 	# puts -nonewline [%W curselection]
@@ -705,10 +667,28 @@ bind .pw.left.found <<ListboxSelect>> {
 	}
 }
 
-# right hand side of panedwindow is just a text widget
-text .pw.note -wrap word -undo 1 -font $defaultFont
+# button bar
 
-.pw add .pw.left .pw.note
+frame .pw.left.barframe
+grid .pw.left.barframe
+
+button .pw.left.barframe.find -text "Find" -command "findCommand"
+button .pw.left.barframe.widen -text "Or" -command "widenCommand"
+button .pw.left.barframe.narrow -text "And" -command "narrowCommand"
+button .pw.left.barframe.exclude -text "Not" -command "excludeCommand"
+button .pw.left.barframe.today -text $todayDay -command {setYearMonthDay $todayYear $todayMonth $todayDay}
+button .pw.left.barframe.unlock -text "Un" -command "unlockNote"
+grid .pw.left.barframe.find .pw.left.barframe.widen .pw.left.barframe.narrow .pw.left.barframe.exclude .pw.left.barframe.today .pw.left.barframe.unlock
+
+# right
+
+frame .pw.right
+pack .pw.right
+
+text .pw.right.note -wrap word -undo 1 -font $defaultFont
+pack .pw.right.note
+
+.pw add .pw.left .pw.right
 pack .pw -fill both -expand yes
 
 loadDisplayedNote
@@ -738,10 +718,10 @@ menu .m -tearoff 0
 # event add <<Copy>> <Control-c>
 # .m add command -label "Paste" -command {tk_textPaste %W}
 # event add <<Paste>> <Control-v>
-.m add command -label "Select All" -underline 7 -command {.pw.note tag add sel 1.0 end} -accelerator <Control-a>
+.m add command -label "Select All" -underline 7 -command {.pw.right.note tag add sel 1.0 end} -accelerator <Control-a>
 .m add command -label Save -underline 0 -command saveDisplayedNote -accelerator <Control-s>
 
-bind .pw.note <Button-3> {tk_popup .m %X %Y}
+bind .pw.right.note <Button-3> {tk_popup .m %X %Y}
 # bind . <Control-s> {.m invoke Save}
 
 # TODO Control-left yesterday
@@ -776,7 +756,7 @@ bind .pw.note <Button-3> {tk_popup .m %X %Y}
 #   }
 # }
 bind . <F2> {setYearMonthDay $todayYear $todayMonth $todayDay}
-bind . <F4> {showOptionsDialog}
+bind . <F4> {unlockNote}
 
 bind . <F5> {findCommand}
 bind . <F6> {widenCommand}
@@ -791,3 +771,7 @@ wm protocol . WM_DELETE_WINDOW {
 	destroy .
 }
 
+update
+set x [expr {([winfo screenwidth .]-[winfo width .])/2}]
+set y [expr {([winfo screenheight .]-[winfo height .])/2}]
+wm geometry . +$x+$y

@@ -12,8 +12,7 @@ set monthNames {"---" "January" "February" "March" "April" "May" "June" "July" "
 set monthAbbrs {"---" "Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec"}
 set searchString ""
 set optionIgnoreCase 1
-set optionSearchWords 1
-set optionLockOldNotes 1
+set optionSearchWords 0
 
 # could store the two importants dates (today and displayed)
 # as separate variables, an array or a dict
@@ -62,7 +61,7 @@ set searchString ""
 # date and filename string mangling
 
 proc monthNameToNumber {m} {
-	if {![string is integer -strict $m]} { puts "ERROR $m is not an integer" }
+	if {![string is integer -strict $m]} { error "'$m' is not an integer" }
 	global monthNames
 	set i [lsearch $monthNames $m]
 	return $i
@@ -70,13 +69,15 @@ proc monthNameToNumber {m} {
 
 proc monthName {m} {
 	global monthNames
-	return [lindex $monthNames $m]
+	set i [lindex $monthNames $m]
+	if { $i == -1 } { error "'$m' not found in monthNames" }
+	return $i
 }
 
 proc filename {y m d} {
-	if {![string is integer -strict $y]} { puts "ERROR $y is not an integer" }
-	if {![string is integer -strict $m]} { puts "ERROR $m is not an integer" }
-	if {![string is integer -strict $d]} { puts "ERROR $d is not an integer" }
+	if {![string is integer -strict $y]} { error "'$y' is not an integer" }
+	if {![string is integer -strict $m]} { error "'$m' is not an integer" }
+	if {![string is integer -strict $d]} { error "'$d' is not an integer" }
 	# day, month are used and displayed internally as 1 .. 31 but needs to be 01 .. 31 for filename
 	return [file join / home gilbert .cj Default $y [format "%02d" $m] "[format "%02d" $d]\.txt"]
 }
@@ -264,9 +265,9 @@ proc findCommand {} {
 		if { [llength $foundLines] == 0 } {
 			return
 		}
-		.pw.left.found delete 0 end
+		.pw.left.foundframe.found delete 0 end
 		foreach line $foundLines {
-			.pw.left.found insert end [filenameToISO8061 $line]
+			.pw.left.foundframe.found insert end [filenameToISO8061 $line]
 		}
 		cancelDialogCommand
 	}
@@ -284,17 +285,17 @@ proc widenCommand {} {
 			return
 		}
 		set oldlines {}
-		foreach line [.pw.left.found get 0 end] {
+		foreach line [.pw.left.foundframe.found get 0 end] {
 			lappend oldlines [ISO8061ToFilename $line]
 		}
 		set newlines [union $oldlines $foundLines]
-		.pw.left.found delete 0 end
+		.pw.left.foundframe.found delete 0 end
 		foreach line $newlines {
-			.pw.left.found insert end [filenameToISO8061 $line]
+			.pw.left.foundframe.found insert end [filenameToISO8061 $line]
 		}
 		cancelDialogCommand
 	}
-	if { [.pw.left.found size] == 0 } {
+	if { [.pw.left.foundframe.found size] == 0 } {
 		return
 	}
 	showSearchDialog "Find More Notes" "Widen" do
@@ -312,19 +313,19 @@ proc narrowCommand {} {
 		}
 		# puts -nonewline "found "; puts $foundLines
 		set oldlines {}
-		foreach line [.pw.left.found get 0 end] {
+		foreach line [.pw.left.foundframe.found get 0 end] {
 			lappend oldlines [ISO8061ToFilename $line]
 		}
 		# puts -nonewline "old "; puts $oldlines
 		set newlines [intersection $oldlines $foundLines]
 		# puts -nonewline "new "; puts $newlines
-		.pw.left.found delete 0 end
+		.pw.left.foundframe.found delete 0 end
 		foreach line $newlines {
-			.pw.left.found insert end [filenameToISO8061 $line]
+			.pw.left.foundframe.found insert end [filenameToISO8061 $line]
 		}
 		cancelDialogCommand
 	}
-	if { [.pw.left.found size] == 0 } {
+	if { [.pw.left.foundframe.found size] == 0 } {
 		return
 	}
 	showSearchDialog "Find Fewer Notes" "Narrow" do
@@ -341,27 +342,27 @@ proc excludeCommand {} {
 			return
 		}
 		set oldlines {}
-		foreach line [.pw.left.found get 0 end] {
+		foreach line [.pw.left.foundframe.found get 0 end] {
 			lappend oldlines [ISO8061ToFilename $line]
 		}
 		set newlines [exclusion $oldlines $foundLines]
-		.pw.left.found delete 0 end
+		.pw.left.foundframe.found delete 0 end
 		foreach line $newlines {
-			.pw.left.found insert end [ISO8061ToFilename $line]
+			.pw.left.foundframe.found insert end [ISO8061ToFilename $line]
 		}
 		cancelDialogCommand
 	}
-	if { [.pw.left.found size] == 0 } {
+	if { [.pw.left.foundframe.found size] == 0 } {
 		return
 	}
 	showSearchDialog "Exclude Notes" "Exclude" do
 }
 
-proc searchOptions {} {
+proc grepOptions {} {
 	global optionIgnoreCase optionSearchWords
 	# --fixed-strings do not use regular expressions
 	# -I exclude binary files
-	set lst "--word-regexp --fixed-strings --recursive --files-with-matches --exclude-dir='.*' -I"
+	set lst "--fixed-strings --recursive --files-with-matches --exclude-dir='.*' -I"
 	if $optionIgnoreCase {
 		lappend lst "--ignore-case"
 	} else {
@@ -381,11 +382,15 @@ proc makeFoundList {} {
 	set output ""
 	set grepstatus 0
 	try {
-		# [searchOptions] returns a list
+		# [grepOptions] returns a list
 		# use Tcl’s argument expansion syntax to provide the list elements as separate arguments
 		# (versions of Tcl prior to 8.5 used the eval command to similar effect)
 		# see Tcl and the Tk Toolkit 2nd edition p202-203
-		set output [exec grep {*}[searchOptions] $searchString [directory]]
+		# set output [exec echo grep {*}[grepOptions] $searchString [directory]]
+		# puts $output
+		set output [exec grep {*}[grepOptions] $searchString [directory]]
+		puts -nonewline [llength $output]
+		puts " grep [grepOptions] $searchString [directory]"
 	} trap CHILDSTATUS {results options} {
     	set grepstatus [lindex [dict get $options -errorcode] 2]
 		# puts [string cat "grepstatus " $grepstatus " results " $results]
@@ -394,6 +399,7 @@ proc makeFoundList {} {
 		# status 2 error
 	}
 	if { $grepstatus != 0 } {
+		puts "0 grep [grepOptions] $searchString [directory]"
 		return {}
 	}
 	set foundLines [lsort [split $output "\n"]]
@@ -614,12 +620,14 @@ set calendarLines [split [exec ncal -bh -m $displayedMonth -y $displayedYear -1]
 set dayNames [regexp -all -inline {\S+} [lindex $calendarLines 1]]
 #puts $dayNames
 
+# user interface
+
 panedwindow .pw -orient horizontal ;#-showhandle 1
 
 # outer frame for all widgets on left hand side of panedwindow
 frame .pw.left -padx 8 -pady 16
 
-# calendar
+# calendar, at top of left frame
 
 # create a 7-column frame to hold the header, day names and day buttons
 frame .pw.left.calframe
@@ -644,22 +652,43 @@ for {set i 0} {$i < 7} {incr i} {
 
 createDayButtons $calendarLines
 
-# found listbox
+# button bar
 
-listbox .pw.left.found -selectmode single
-grid .pw.left.found -row 1 -column 0 -sticky news -pady 16
-scrollbar .pw.left.sb -orient vertical -command {.pw.left.found yview}
-grid .pw.left.sb -row 1 -column 1 -sticky ns -pady 16
+frame .pw.left.barframe
+grid .pw.left.barframe -pady 8
 
-.pw.left.found configure -yscrollcommand {.pw.left.sb set}
-bind .pw.left.found <<ListboxSelect>> {
+button .pw.left.barframe.find -text "Find" -command "findCommand"
+grid .pw.left.barframe.find -row 0 -column 0
+button .pw.left.barframe.widen -text "Or" -command "widenCommand"
+grid .pw.left.barframe.widen -row 0 -column 1
+button .pw.left.barframe.narrow -text "And" -command "narrowCommand"
+grid .pw.left.barframe.narrow -row 0 -column 2
+button .pw.left.barframe.exclude -text "Not" -command "excludeCommand"
+grid .pw.left.barframe.exclude -row 0 -column 3
+button .pw.left.barframe.today -text $todayDay -command {setYearMonthDay $todayYear $todayMonth $todayDay}
+grid .pw.left.barframe.today -row 0 -column 4
+button .pw.left.barframe.unlock -text "Un" -command "unlockNote"
+grid .pw.left.barframe.unlock -row 0 -column 5
+
+# found listbox and scrollbar
+
+frame .pw.left.foundframe
+grid .pw.left.foundframe
+
+listbox .pw.left.foundframe.found -selectmode single
+grid .pw.left.foundframe.found -row 1 -column 0 -pady 8
+scrollbar .pw.left.foundframe.sb -orient vertical -command {.pw.left.foundframe.found yview}
+grid .pw.left.foundframe.sb -row 1 -column 1 -sticky ns -pady 8
+
+.pw.left.foundframe.found configure -yscrollcommand {.pw.left.foundframe.sb set}
+bind .pw.left.foundframe.found <<ListboxSelect>> {
 	# puts -nonewline "listbox select "
 	# puts -nonewline [%W curselection]
-	# puts [.pw.left.found get [%W curselection]]
+	# puts [.pw.left.foundframe.found get [%W curselection]]
 	if { [llength [%W curselection]] == 1 } {
 		set i [lindex [%W curselection] 0]
 		if { [string is integer $i] } {
-			set txt [.pw.left.found get $i]
+			set txt [.pw.left.foundframe.found get $i]
 			set txt [ISO8061ToDate $txt]
 			lassign $txt y m d
 			setYearMonthDay $y $m $d
@@ -669,16 +698,16 @@ bind .pw.left.found <<ListboxSelect>> {
 
 # button bar
 
-frame .pw.left.barframe
-grid .pw.left.barframe
+# frame .pw.left.barframe
+# grid .pw.left.barframe
 
-button .pw.left.barframe.find -text "Find" -command "findCommand"
-button .pw.left.barframe.widen -text "Or" -command "widenCommand"
-button .pw.left.barframe.narrow -text "And" -command "narrowCommand"
-button .pw.left.barframe.exclude -text "Not" -command "excludeCommand"
-button .pw.left.barframe.today -text $todayDay -command {setYearMonthDay $todayYear $todayMonth $todayDay}
-button .pw.left.barframe.unlock -text "Un" -command "unlockNote"
-grid .pw.left.barframe.find .pw.left.barframe.widen .pw.left.barframe.narrow .pw.left.barframe.exclude .pw.left.barframe.today .pw.left.barframe.unlock
+# button .pw.left.barframe.find -text "Find" -command "findCommand"
+# button .pw.left.barframe.widen -text "Or" -command "widenCommand"
+# button .pw.left.barframe.narrow -text "And" -command "narrowCommand"
+# button .pw.left.barframe.exclude -text "Not" -command "excludeCommand"
+# button .pw.left.barframe.today -text $todayDay -command {setYearMonthDay $todayYear $todayMonth $todayDay}
+# button .pw.left.barframe.unlock -text "Un" -command "unlockNote"
+# grid .pw.left.barframe.find .pw.left.barframe.widen .pw.left.barframe.narrow .pw.left.barframe.exclude .pw.left.barframe.today .pw.left.barframe.unlock
 
 # right
 
